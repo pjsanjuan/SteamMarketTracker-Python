@@ -4,7 +4,6 @@ import PIL.Image
 import PIL.ImageTk
 import tkinter
 from io import BytesIO
-#ignore text
 #######################################################################################################
 # root = tkinter.Tk()
 api_key = '7C28D264D4A05EB3ED84423B00F0F392'
@@ -49,13 +48,7 @@ class ProfileDisplay:
             'Online Status: ' + self.online_status
         )
         self.text_label = tkinter.Label(self.root,text = self.text).pack()
-
-        #print()
-
         self.root.mainloop()
-
-
-
 
 class Weapon:
     def __init__(self,name_p,link_p,purchase_price_p):
@@ -67,12 +60,9 @@ class SteamScraperApp:
     def __init__(self,list_of_items_p):
         self.list_of_items = list_of_items_p
         self.l_arr = []
-        # self.p_arr = []
         self.row_counter = 0
         self.column = 0
         self.root = tkinter.Tk()
-        # self.price_label
-        # self.root.mainloop()
 
     def refresh(self):
         self.row_counter = 0
@@ -83,7 +73,6 @@ class SteamScraperApp:
     def open_profile(self):
         x = ProfileSearch()
 
-
     def list_items(self):
 
         for item in self.list_of_items:
@@ -93,16 +82,14 @@ class SteamScraperApp:
             twenty_cent = str("%.2f" % ((float(item.purchase_price) + 0.20) * steamTax))
             twenty_five_cent = str("%.2f" % ((float(item.purchase_price) + 0.25) * steamTax))
             thrity_cent = str("%.2f" % ((float(item.purchase_price) + 0.30) * steamTax))
-
+            # Split the url using '/' as the delimiter
             hash_name = item.url.split('/')
 
-
             request_URL = baseURL + hash_name[-1]
-            # print(request_URL)
             # Create json
             try:
                 page = requests.get(request_URL)
-                print("RequestURL:" + request_URL)
+                # print("RequestURL:" + request_URL)
                 page.raise_for_status()
             except requests.HTTPError:
                 print("Unable to make request for item" + item["Name"])
@@ -125,7 +112,8 @@ class SteamScraperApp:
             # Get img_url
             page = requests.get(item.url)
             tree = html.fromstring(page.content)
-            img_url = tree.xpath('//*[@id="mainContents"]/div[2]/div/div[1]/img/@src') # //*[@id="mainContents"]/div[2]/div/div[1]/img
+            # Grab image URL using Xpath
+            img_url = tree.xpath('//*[@id="mainContents"]/div[2]/div/div[1]/img/@src')
             try:
                 print(img_url[0])
             except IndexError:
@@ -145,7 +133,7 @@ class SteamScraperApp:
             self.row_counter += 1
 
         refresh_button = tkinter.Button(self.root, text="Refresh",command = self.refresh).place(x=0,y=0)
-        profile_button = tkinter.Button(self.root, text="Profile", command=self.open_profile).place(x=200, y=0)
+        profile_button = tkinter.Button(self.root, text="Profile", command=self.open_profile).place(x=300 ,y=0)
         self.root.mainloop()
 
 
