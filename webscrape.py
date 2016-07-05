@@ -8,59 +8,55 @@ from io import BytesIO
 #######################################################################################################
 # root = tkinter.Tk()
 api_key = '7C28D264D4A05EB3ED84423B00F0F392'
+base_profile_URL = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=7C28D264D4A05EB3ED84423B00F0F392&steamids='
 steamTax = 1.15
+# 76561198033724063
 # baseURL string. DO NOT MODIFY
 baseURL = 'http://steamcommunity.com/market/priceoverview/?currency=13&appid=730&market_hash_name='
-class Profile:
+class ProfileSearch:
     def __init__(self):
         self.root = tkinter.Toplevel()
-        self.root.title('Profile')
-        # Print the information
-        self.profile_url = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=7C28D264D4A05EB3ED84423B00F0F392&steamids=76561198033724063'
-        self.page = requests.get(self.profile_url)
-        self.page_json = self.page.json()
-        self.list = self.page_json['response']['players'][0]
+        self.search_param = tkinter.StringVar()
+        self.arg = tkinter.StringVar()
 
-        print(self.list['avatar'])
-        try:
-            self.img = requests.get(self.list['avatarfull'])
-
-        except requests.HTTPError:
-            print("Cannot connect")
-
-        # print(self.img.content)
-        # Display the image--------------------------------------------------
-        self.avatar = PIL.Image.open(BytesIO(self.img.content))
-        self.avatar = self.avatar.resize((150, 150), PIL.Image.ANTIALIAS)
-        self.photo = PIL.ImageTk.PhotoImage(self.avatar)
-        self.avatar_label = tkinter.Label(self.root, image=self.photo)
-        self.avatar_label.grid(row = 0, column = 0)
-        # Display the text=----------------------------------------------------
-        if self.list['personastate'] == 1:
-            self.online_status = 'Online'
-
-        # Display the text
-        self.text_info = ('Name: ' + self.list['personaname'] + '\n' +
-                          'Profile URL: ' + self.list['profileurl'] + '\n'+
-                          'Online Status: ' + self.online_status
-                          )
-
-        self.text_label = tkinter.Label(self.root, text = self.text_info)
-        self.text_label.grid(row=1, column=0)
-
-        # img = PIL.Image.open(BytesIO(r.content))
-        # img = img.resize((150, 150), PIL.Image.ANTIALIAS)
-        # photo = PIL.ImageTk.PhotoImage(img)
-        # img_label = tkinter.Label(self.root, image=photo)
-        # img_label.grid(row=self.row_counter, column=2)
-
-        # for i in self.list:
-        #     print(i,self.list[i])
-
-
-
-        # Display Name
+        self.m_button = tkinter.Button(self.root,text="Enter 64bit Steam ID",command = self.GotoProfile).grid(row=0,column=0)
+        self.ment = tkinter.Entry(self.root, textvariable=self.arg).grid(row=0, column=1)
         self.root.mainloop()
+
+    def GotoProfile(self):
+        self.profile_id = self.arg.get()
+        self.profile_URL = base_profile_URL+self.profile_id
+        print(self.profile_URL)
+        try:
+            self.page = requests.get(self.profile_URL)
+            self.page.raise_for_status()
+            print(self.page)
+            y = ProfileDisplay(self.page)
+        except requests.HTTPError:
+            print('Profile URL Not Found')
+
+class ProfileDisplay:
+    def __init__(self,page):
+        self.root = tkinter.Toplevel()
+        self.page = page
+        self.page_dict = self.page.json()
+        self.page_dict_list = self.page_dict['response']['players'][0]
+        if self.page_dict_list['personastate'] == 1:
+            self.online_status = 'Online'
+        self.text = (
+            'Name: ' + self.page_dict_list['personaname'] + '\n' +
+            'Profile URL: ' + self.page_dict_list['profileurl'] + '\n' +
+            'Online Status: ' + self.online_status
+        )
+        self.text_label = tkinter.Label(self.root,text = self.text).pack()
+
+        #print()
+
+        self.root.mainloop()
+
+
+
+
 class Weapon:
     def __init__(self,name_p,link_p,purchase_price_p):
         self.name = name_p
@@ -85,7 +81,7 @@ class SteamScraperApp:
         self.list_items()
 
     def open_profile(self):
-        x = Profile()
+        x = ProfileSearch()
 
 
     def list_items(self):
@@ -106,6 +102,7 @@ class SteamScraperApp:
             # Create json
             try:
                 page = requests.get(request_URL)
+                print("RequestURL:" + request_URL)
                 page.raise_for_status()
             except requests.HTTPError:
                 print("Unable to make request for item" + item["Name"])
