@@ -15,15 +15,24 @@ baseURL = 'http://steamcommunity.com/market/priceoverview/?currency=13&appid=730
 class ProfileSearch:
     def __init__(self):
         self.root = tkinter.Toplevel()
-        self.search_param = tkinter.StringVar()
-        self.arg = tkinter.StringVar()
-
+        # self.search_param = tkinter.StringVar()
+        self.arg = tkinter.IntVar()
         self.m_button = tkinter.Button(self.root,text="Enter 64bit Steam ID",command = self.GotoProfile).grid(row=0,column=0)
         self.ment = tkinter.Entry(self.root, textvariable=self.arg).grid(row=0, column=1)
         self.root.mainloop()
 
     def GotoProfile(self):
-        self.profile_id = self.arg.get()
+        self.profile_id = str(self.arg.get())
+        if(len(self.profile_id) != 17):
+            top = tkinter.Toplevel()
+            top.title("Error")
+
+            msg = tkinter.Message(top, text="Invalid Profile ID")
+            msg.pack()
+
+            button = tkinter.Button(top, text="Dismiss", command=top.destroy)
+            button.pack()
+            return
         self.profile_URL = base_profile_URL+self.profile_id
         print(self.profile_URL)
         try:
@@ -34,11 +43,24 @@ class ProfileSearch:
         except requests.HTTPError:
             print('Profile URL Not Found')
 
+
 class ProfileDisplay:
-    def __init__(self,page):
+    def __init__(self, page):
         self.root = tkinter.Toplevel()
         self.page = page
         self.page_dict = self.page.json()
+        # Check to see if player proile exists based on the 64 bit ID number
+        if len(self.page_dict['response']['players']) == 0:
+            top = tkinter.Toplevel()
+            top.title("Error")
+
+            msg = tkinter.Message(top, text="Player not found")
+            msg.pack()
+
+            button = tkinter.Button(top, text="Dismiss", command=top.destroy)
+            button.pack()
+            return
+        # at this point the player profile DOES exist.
         self.page_dict_list = self.page_dict['response']['players'][0]
         if self.page_dict_list['personastate'] == 1:
             self.online_status = 'Online'
@@ -50,14 +72,16 @@ class ProfileDisplay:
         self.text_label = tkinter.Label(self.root,text = self.text).pack()
         self.root.mainloop()
 
+
 class Weapon:
-    def __init__(self,name_p,link_p,purchase_price_p):
+    def __init__(self, name_p, link_p, purchase_price_p):
         self.name = name_p
         self.url = link_p
         self.purchase_price = purchase_price_p
 
+
 class SteamScraperApp:
-    def __init__(self,list_of_items_p):
+    def __init__(self, list_of_items_p):
         self.list_of_items = list_of_items_p
         self.l_arr = []
         self.row_counter = 0
@@ -74,11 +98,10 @@ class SteamScraperApp:
         x = ProfileSearch()
 
     def list_items(self):
-
         for item in self.list_of_items:
             # Print the text Information ------------------------------------------------------------
-            break_even_price = str( "%.2f" % (float(item.purchase_price) * steamTax))
-            fifteen_cent = str( "%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
+            break_even_price = str("%.2f" % (float(item.purchase_price) * steamTax))
+            fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
             twenty_cent = str("%.2f" % ((float(item.purchase_price) + 0.20) * steamTax))
             twenty_five_cent = str("%.2f" % ((float(item.purchase_price) + 0.25) * steamTax))
             thrity_cent = str("%.2f" % ((float(item.purchase_price) + 0.30) * steamTax))
@@ -96,7 +119,7 @@ class SteamScraperApp:
                 continue
 
             json_dict = page.json()
-            self.price_label = tkinter.Label(self.root, text=
+            text_to_display = (
                 "Name: " + item.name + '\n' +
                 "Purchase Price: " + item.purchase_price + '\n' +
                 "Median Price: " + json_dict[u'median_price'] + '\n' +
@@ -106,7 +129,9 @@ class SteamScraperApp:
                 "20c Profit: " + twenty_cent + '\n' +
                 "25c Profit: " + twenty_five_cent + '\n' +
                 "30c Profit: " + thrity_cent + '\n' +
-                "--------------------------------------------------\n")
+                "--------------------------------------------------\n"
+            )
+            self.price_label = tkinter.Label(self.root, text=text_to_display)
             self.price_label.grid(row=self.row_counter, column=0)
             # Display the image -------------------------------------------------------------------------
             # Get img_url
