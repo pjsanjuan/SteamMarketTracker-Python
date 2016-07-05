@@ -132,7 +132,7 @@ class SteamScraperApp:
                 "Name: " + item.name + '\n' +
                 "Purchase Price: " + item.purchase_price + '\n' +
                 "Median Price: " + json_dict[u'median_price'] + '\n' +
-                # "Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
+                "Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
                 "Break Even: " + break_even_price + '\n' +
                 "15c Profit: " + fifteen_cent + '\n' +
                 "20c Profit: " + twenty_cent + '\n' +
