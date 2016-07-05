@@ -171,6 +171,9 @@ class SteamScraperApp:
         self.root.mainloop()
 
 
+
+
+
 item1 = Weapon('AK-47 | Redline (Field Tested)','http://steamcommunity.com/market/listings/730/AK-47%20%7C%20Redline%20(Field-Tested)','5.75')
 item2 = Weapon('AWP | Worm God (Minimal Wear)','http://steamcommunity.com/market/listings/730/AWP%20%7C%20Worm%20God%20(Minimal%20Wear)','0.83')
 item3 = Weapon('M4A1-S | Blood Tiger (Minimal Wear)','http://steamcommunity.com/market/listings/730/M4A1-S%20%7C%20Blood%20Tiger%20%28Minimal%20Wear%29','1.68')
