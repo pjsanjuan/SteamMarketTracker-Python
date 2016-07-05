@@ -18,7 +18,7 @@ class ProfileSearch:
         # self.search_param = tkinter.StringVar()
         self.arg = tkinter.IntVar()
         self.m_button = tkinter.Button(self.root,text="Enter 64bit Steam ID",command = self.GotoProfile).grid(row=0,column=0)
-        self.ment = tkinter.Entry(self.root, textvariable=self.arg).grid(row=0, column=1)
+        self.ment = tkinter.Entry(self.root, textvariable=self.arg).grid(row=0, column=2)
         self.root.mainloop()
 
     def GotoProfile(self):
@@ -64,6 +64,15 @@ class ProfileDisplay:
         self.page_dict_list = self.page_dict['response']['players'][0]
         if self.page_dict_list['personastate'] == 1:
             self.online_status = 'Online'
+        # Display profile image ----------------------------------------------
+        self.r = requests.get(self.page_dict_list['avatarfull'])
+        self.img = PIL.Image.open(BytesIO(self.r.content))
+        self.img = self.img.resize((150, 150), PIL.Image.ANTIALIAS)
+        self.photo = PIL.ImageTk.PhotoImage(self.img)
+        self.img_label = tkinter.Label(self.root, image=self.photo)
+        self.img_label.pack()
+
+
         self.text = (
             'Name: ' + self.page_dict_list['personaname'] + '\n' +
             'Profile URL: ' + self.page_dict_list['profileurl'] + '\n' +
