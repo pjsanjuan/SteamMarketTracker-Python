@@ -34,11 +34,11 @@ class ProfileSearch:
             button.pack()
             return
         self.profile_URL = base_profile_URL+self.profile_id
-        print(self.profile_URL)
+        # print(self.profile_URL)
         try:
             self.page = requests.get(self.profile_URL)
             self.page.raise_for_status()
-            print(self.page)
+            # print(self.page)
             y = ProfileDisplay(self.page)
         except requests.HTTPError:
             print('Profile URL Not Found')
@@ -81,14 +81,22 @@ class ProfileDisplay:
         self.text_label = tkinter.Label(self.root,text = self.text).pack()
         self.root.mainloop()
 
-
+# Must take in link as argument.
+# Optional arguments: item name and purchase price (string)
 class Weapon:
-    def __init__(self, name_p, link_p, purchase_price_p):
-        self.name = name_p
+    def __init__(self, link_p,*args):
         self.url = link_p
-        self.purchase_price = purchase_price_p
+        if(args[0] != None):
+            self.name = args[0]
+        else:
+            self.name = 'No name provided'
+        if(args[1] != None):
+            self.purchase_price = args[1]
+        else:
+            self.purchase_price = '0'
 
 
+# Takes in a list of Weapon objects.
 class SteamScraperApp:
     def __init__(self, list_of_items_p):
         self.list_of_items = list_of_items_p
@@ -109,6 +117,7 @@ class SteamScraperApp:
     def list_items(self):
         for item in self.list_of_items:
             # Print the text Information ------------------------------------------------------------
+            # Prices for profit
             break_even_price = str("%.2f" % (float(item.purchase_price) * steamTax))
             fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
             twenty_cent = str("%.2f" % ((float(item.purchase_price) + 0.20) * steamTax))
@@ -117,6 +126,8 @@ class SteamScraperApp:
             # Split the url using '/' as the delimiter
             hash_name = item.url.split('/')
 
+            # Generate the json URL for the item/weapon. Something along the lines of
+            # http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=StatTrak%E2%84%A2%20P250%20%7C%20Steel%20Disruption%20%28Factory%20New%29
             request_URL = baseURL + hash_name[-1]
             # Create json
             try:
@@ -149,7 +160,7 @@ class SteamScraperApp:
             # Grab image URL using Xpath
             img_url = tree.xpath('//*[@id="mainContents"]/div[2]/div/div[1]/img/@src')
             try:
-                print(img_url[0])
+                self.temp = img_url[0]
             except IndexError:
                 print("img_url[0] == None:")
                 print(item.url)
@@ -172,15 +183,16 @@ class SteamScraperApp:
 
 
 
+item1 = Weapon('http://steamcommunity.com/market/listings/730/AK-47%20%7C%20Redline%20(Field-Tested)','AK-47 | Redline (Field Tested)','5.75')
+item2 = Weapon('http://steamcommunity.com/market/listings/730/AWP%20%7C%20Worm%20God%20(Minimal%20Wear)','AWP | Worm God (Minimal Wear)','0.83')
+item3 = Weapon('http://steamcommunity.com/market/listings/730/M4A1-S%20%7C%20Blood%20Tiger%20%28Minimal%20Wear%29','M4A1-S | Blood Tiger (Minimal Wear)','1.68')
+item4 = Weapon('http://steamcommunity.com/market/listings/730/M4A4%20%7C%20Griffin%20%28Minimal%20Wear%29','M4A4 | Griffin (Minimal Wear)','1.53')
 
-
-item1 = Weapon('AK-47 | Redline (Field Tested)','http://steamcommunity.com/market/listings/730/AK-47%20%7C%20Redline%20(Field-Tested)','5.75')
-item2 = Weapon('AWP | Worm God (Minimal Wear)','http://steamcommunity.com/market/listings/730/AWP%20%7C%20Worm%20God%20(Minimal%20Wear)','0.83')
-item3 = Weapon('M4A1-S | Blood Tiger (Minimal Wear)','http://steamcommunity.com/market/listings/730/M4A1-S%20%7C%20Blood%20Tiger%20%28Minimal%20Wear%29','1.68')
 l_o_i = []
 l_o_i.append(item1)
 l_o_i.append(item2)
 l_o_i.append(item3)
+l_o_i.append(item4)
 
 x = SteamScraperApp(l_o_i)
 x.list_items()
