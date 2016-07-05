@@ -4,7 +4,7 @@ import PIL.Image
 import PIL.ImageTk
 import tkinter
 from io import BytesIO
-
+#ignore text
 #######################################################################################################
 # root = tkinter.Tk()
 api_key = '7C28D264D4A05EB3ED84423B00F0F392'
