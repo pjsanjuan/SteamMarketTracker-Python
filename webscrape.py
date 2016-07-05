@@ -4,6 +4,7 @@ import PIL.Image
 import PIL.ImageTk
 import tkinter
 from io import BytesIO
+import csv
 #######################################################################################################
 # root = tkinter.Tk()
 api_key = '7C28D264D4A05EB3ED84423B00F0F392'
@@ -143,7 +144,7 @@ class SteamScraperApp:
                 "Name: " + item.name + '\n' +
                 "Purchase Price: " + item.purchase_price + '\n' +
                 "Median Price: " + json_dict[u'median_price'] + '\n' +
-                "Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
+                #"Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
                 "Break Even: " + break_even_price + '\n' +
                 "15c Profit: " + fifteen_cent + '\n' +
                 "20c Profit: " + twenty_cent + '\n' +
@@ -181,20 +182,32 @@ class SteamScraperApp:
         profile_button = tkinter.Button(self.root, text="Profile", command=self.open_profile).place(x=300 ,y=0)
         self.root.mainloop()
 
+# item1 = Weapon('http://steamcommunity.com/market/listings/730/AK-47%20%7C%20Redline%20(Field-Tested)','AK-47 | Redline (Field Tested)','5.75')
+# item2 = Weapon('http://steamcommunity.com/market/listings/730/AWP%20%7C%20Worm%20God%20(Minimal%20Wear)','AWP | Worm God (Minimal Wear)','0.83')
+# item3 = Weapon('http://steamcommunity.com/market/listings/730/M4A1-S%20%7C%20Blood%20Tiger%20%28Minimal%20Wear%29','M4A1-S | Blood Tiger (Minimal Wear)','1.68')
+# item4 = Weapon('http://steamcommunity.com/market/listings/730/M4A4%20%7C%20Griffin%20%28Minimal%20Wear%29','M4A4 | Griffin (Minimal Wear)','1.53')
+#
+# l_o_i = []
+# l_o_i.append(item1)
+# l_o_i.append(item2)
+# l_o_i.append(item3)
+# l_o_i.append(item4)
+#
+# print(l_o_i)
+#
+# x = SteamScraperApp(l_o_i)
+# x.list_items()
 
+l_o_i_read= []
+csv_file = open('market_store.txt')
+read_csv = csv.reader(csv_file,delimiter=',')
+print(read_csv)
+for row in read_csv:
+    l_o_i_read.append(Weapon(row[0],row[1],row[2]))
 
-item1 = Weapon('http://steamcommunity.com/market/listings/730/AK-47%20%7C%20Redline%20(Field-Tested)','AK-47 | Redline (Field Tested)','5.75')
-item2 = Weapon('http://steamcommunity.com/market/listings/730/AWP%20%7C%20Worm%20God%20(Minimal%20Wear)','AWP | Worm God (Minimal Wear)','0.83')
-item3 = Weapon('http://steamcommunity.com/market/listings/730/M4A1-S%20%7C%20Blood%20Tiger%20%28Minimal%20Wear%29','M4A1-S | Blood Tiger (Minimal Wear)','1.68')
-item4 = Weapon('http://steamcommunity.com/market/listings/730/M4A4%20%7C%20Griffin%20%28Minimal%20Wear%29','M4A4 | Griffin (Minimal Wear)','1.53')
-
-l_o_i = []
-l_o_i.append(item1)
-l_o_i.append(item2)
-l_o_i.append(item3)
-l_o_i.append(item4)
-
-x = SteamScraperApp(l_o_i)
+print(l_o_i_read)
+x = SteamScraperApp(l_o_i_read)
 x.list_items()
-
+# csv_file.close()
+# Terminate program
 
