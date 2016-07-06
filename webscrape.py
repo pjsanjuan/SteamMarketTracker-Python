@@ -120,16 +120,12 @@ class AddItem:
 
     def AddToList(self):
         self.temp1 = self.link_arg.get()
-        #test if link entered is a valid connection
+        # test if link entered is a valid connection
         try:
             self.r = requests.get(self.temp1)
             # raise signal if not a valid link
             self.r.raise_for_status()
-            self.temp2 = self.name_arg.get()
-            self.temp3 = str(self.price_arg.get())
-            with open('market_store.txt','a') as f:
-                f.write(self.temp1 + ',' + self.temp2 + ',' + self.temp3)
-            self.root.destroy()
+
         except requests.HTTPError:
             print("Error - Cannot Access Link. Please  make sure Link is valid or if Steam is down")
             self.error_popup = tkinter.Toplevel()
@@ -137,7 +133,22 @@ class AddItem:
             self.error__label = tkinter.Label(self.error_popup, text='Cannot Access Link. Please  make sure Link is valid or if Steam is down')
             self.error_popup.after(3000, self.error_popup.destroy)
             self.error_popup.mainloop()
+        self.temp2 = self.name_arg.get()
+        self.temp3 = str(self.price_arg.get())
 
+        # Check for duplicate links
+        with open('market_store.txt','r') as csv_file:
+            read_csv = csv.reader(csv_file, delimiter=',')
+            line_counter = 0
+            for row in read_csv:
+                if row[0] == self.temp1:
+                    print('Duplicate found at line ' + str(line_counter) + '.\n')
+                    return
+                line_counter += 1
+        # Did not find any duplicate links
+        with open('market_store.txt', 'a') as f:
+            f.write(self.temp1 + ',' + self.temp2 + ',' + self.temp3)
+        self.root.destroy()
 class Calculator:
     def __init__(self):
         self.root = tkinter.Toplevel()
@@ -261,7 +272,6 @@ class SteamScraperApp:
         self.root.mainloop()
 
 l_o_i_read = []
-
 with open('market_store.txt') as csv_file:
     read_csv = csv.reader(csv_file, delimiter=',')
     print(read_csv)
