@@ -8,7 +8,8 @@ import csv
 #######################################################################################################
 # root = tkinter.Tk()
 api_key = '7C28D264D4A05EB3ED84423B00F0F392'
-base_profile_URL = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=7C28D264D4A05EB3ED84423B00F0F392&steamids='
+base_profile_URL = ('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
+                    + '?key=7C28D264D4A05EB3ED84423B00F0F392&steamids=')
 steamTax = 1.15
 # 76561198033724063
 # baseURL string. DO NOT MODIFY
@@ -137,8 +138,36 @@ class AddItem:
             self.error_popup.after(3000, self.error_popup.destroy)
             self.error_popup.mainloop()
 
+class Calculator:
+    def __init__(self):
+        self.root = tkinter.Toplevel()
+        self.root.title("Calculator")
 
-# Takes in a list of Weapon objects.
+        # Display entry box-----------------
+        self.price_arg = tkinter.DoubleVar()
+        self.price_label = tkinter.Label(self.root, text='Enter price')
+        self.price_label.pack()
+        self.price_entry = tkinter.Entry(self.root, textvariable=self.price_arg)
+        self.price_entry.pack()
+        self.price_button = tkinter.Button(self.root, text ="Calculate!",command=self.LaunchCalculation).pack()
+        # Display info
+        self.root.mainloop()
+
+    def LaunchCalculation(self):
+        self.calc_results_popup = tkinter.Toplevel()
+        # Get value (int)
+        value = self.price_arg.get()
+        print(value)
+        break_even_value = value * steamTax
+        fifteen_cent_profit = (value+0.15)*steamTax
+        text_to_display = ('Break even value: ' + str(break_even_value) + '\n' +
+                            '15c Profit: ' + str(fifteen_cent_profit) + '\n'
+                           )
+        self.text_label = tkinter.Label(self.calc_results_popup,text=text_to_display).pack()
+
+        self.calc_results_popup.mainloop()
+
+    # Takes in a list of Weapon objects.
 class SteamScraperApp:
     def __init__(self, list_of_items_p):
         self.list_of_items = list_of_items_p
@@ -158,6 +187,9 @@ class SteamScraperApp:
 
     def open_item_adder(self):
         z = AddItem()
+
+    def open_calculator(self):
+        xy = Calculator()
 
     def list_items(self):
         for item in self.list_of_items:
@@ -222,38 +254,22 @@ class SteamScraperApp:
             # Increment row for formatting purposes
             self.row_counter += 1
 
-        refresh_button = tkinter.Button(self.root, text="Refresh",command = self.refresh).place(x=0,y=0)
-        profile_button = tkinter.Button(self.root, text="Profile", command=self.open_profile).place(x=300 ,y=0)
-        add__to_button = tkinter.Button(self.root,text="Add Item to Inspection List",command=self.open_item_adder).place(x=150,y=0)
+        refresh_button = tkinter.Button(self.root, text="Refresh", command=self.refresh).place(x=0, y=0)
+        profile_button = tkinter.Button(self.root, text="Profile", command=self.open_profile).place(x=300, y=0)
+        add__to_button = tkinter.Button(self.root, text="Add Item to Inspection List", command=self.open_item_adder).place(x=150, y=0)
+        calc_button    = tkinter.Button(self.root, text="Calculator", command=self.open_calculator).place(x=100, y=0)
         self.root.mainloop()
 
-# item1 = Weapon('http://steamcommunity.com/market/listings/730/AK-47%20%7C%20Redline%20(Field-Tested)','AK-47 | Redline (Field Tested)','5.75')
-# item2 = Weapon('http://steamcommunity.com/market/listings/730/AWP%20%7C%20Worm%20God%20(Minimal%20Wear)','AWP | Worm God (Minimal Wear)','0.83')
-# item3 = Weapon('http://steamcommunity.com/market/listings/730/M4A1-S%20%7C%20Blood%20Tiger%20%28Minimal%20Wear%29','M4A1-S | Blood Tiger (Minimal Wear)','1.68')
-# item4 = Weapon('http://steamcommunity.com/market/listings/730/M4A4%20%7C%20Griffin%20%28Minimal%20Wear%29','M4A4 | Griffin (Minimal Wear)','1.53')
-#
-# l_o_i = []
-# l_o_i.append(item1)
-# l_o_i.append(item2)
-# l_o_i.append(item3)
-# l_o_i.append(item4)
-#
-# print(l_o_i)
-#
-# x = SteamScraperApp(l_o_i)
-# x.list_items()
-
-l_o_i_read= []
+l_o_i_read = []
 
 with open('market_store.txt') as csv_file:
-    read_csv = csv.reader(csv_file,delimiter=',')
+    read_csv = csv.reader(csv_file, delimiter=',')
     print(read_csv)
     for row in read_csv:
-        l_o_i_read.append(Weapon(row[0],row[1],row[2]))
+        l_o_i_read.append(Weapon(row[0], row[1], row[2]))
 
 print(l_o_i_read)
 x = SteamScraperApp(l_o_i_read)
 x.list_items()
 # csv_file.close()
 # Terminate program
-
