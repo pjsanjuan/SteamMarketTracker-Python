@@ -17,13 +17,13 @@ class ProfileSearch:
     def __init__(self):
         self.root = tkinter.Toplevel()
         # self.search_param = tkinter.StringVar()
-        self.arg = tkinter.IntVar()
-        self.m_button = tkinter.Button(self.root,text="Enter 64bit Steam ID",command = self.GotoProfile).grid(row=0,column=0)
-        self.ment = tkinter.Entry(self.root, textvariable=self.arg).grid(row=0, column=2)
+        self.profile_arg = tkinter.IntVar()
+        self.profile_button = tkinter.Button(self.root, text="Enter 64bit Steam ID", command = self.GotoProfile).grid(row=0, column=0)
+        self.profile_entry = tkinter.Entry(self.root, textvariable=self.profile_arg).grid(row=0, column=2)
         self.root.mainloop()
 
     def GotoProfile(self):
-        self.profile_id = str(self.arg.get())
+        self.profile_id = str(self.profile_arg.get())
         if(len(self.profile_id) != 17):
             top = tkinter.Toplevel()
             top.title("Error")
@@ -60,6 +60,7 @@ class ProfileDisplay:
 
             button = tkinter.Button(top, text="Dismiss", command=top.destroy)
             button.pack()
+            self.root.destroy()
             return
         # at this point the player profile DOES exist.
         self.page_dict_list = self.page_dict['response']['players'][0]
@@ -96,6 +97,46 @@ class Weapon:
         else:
             self.purchase_price = '0'
 
+class AddItem:
+    def __init__(self):
+        self.root = tkinter.Toplevel()
+        # Need 3 StringVar/IntVar
+        self.link_arg = tkinter.StringVar()
+        self.name_arg = tkinter.StringVar()
+        self.price_arg= tkinter.IntVar()
+        # Need 3 Entry Fields
+        self.link_entry = tkinter.Entry(self.root, textvariable=self.link_arg).grid(row=2, column=3)
+        self.name_entry = tkinter.Entry(self.root, textvariable=self.name_arg).grid(row=1, column=3)
+        self.price_entry= tkinter.Entry(self.root, textvariable=self.price_arg).grid(row=3, column=3)
+        #Need 3 Labels for Text for Entry
+        self.name_label = tkinter.Label(self.root,text="Name: ").grid(row=1,column=2)
+        self.link_label = tkinter.Label(self.root, text="Link: ").grid(row=2, column=2)
+        self.price_label= tkinter.Label(self.root, text="Price: ").grid(row=3, column=2)
+
+        # Button to add entries to market_store.txt
+        self.add_button = tkinter.Button(self.root,text="Add to List",command=self.AddToList).grid(row=4,column=4)
+        self.root.mainloop()
+
+    def AddToList(self):
+        self.temp1 = self.link_arg.get()
+        #test if link entered is a valid connection
+        try:
+            self.r = requests.get(self.temp1)
+            # raise signal if not a valid link
+            self.r.raise_for_status()
+            self.temp2 = self.name_arg.get()
+            self.temp3 = str(self.price_arg.get())
+            with open('market_store.txt','a') as f:
+                f.write(self.temp1 + ',' + self.temp2 + ',' + self.temp3)
+            self.root.destroy()
+        except requests.HTTPError:
+            print("Error - Cannot Access Link. Please  make sure Link is valid or if Steam is down")
+            self.error_popup = tkinter.Toplevel()
+            self.error_popup.title('Error')
+            self.error__label = tkinter.Label(self.error_popup, text='Cannot Access Link. Please  make sure Link is valid or if Steam is down')
+            self.error_popup.after(3000, self.error_popup.destroy)
+            self.error_popup.mainloop()
+
 
 # Takes in a list of Weapon objects.
 class SteamScraperApp:
@@ -115,6 +156,9 @@ class SteamScraperApp:
     def open_profile(self):
         x = ProfileSearch()
 
+    def open_item_adder(self):
+        z = AddItem()
+
     def list_items(self):
         for item in self.list_of_items:
             # Print the text Information ------------------------------------------------------------
@@ -129,14 +173,14 @@ class SteamScraperApp:
 
             # Generate the json URL for the item/weapon. Something along the lines of
             # http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=StatTrak%E2%84%A2%20P250%20%7C%20Steel%20Disruption%20%28Factory%20New%29
-            request_URL = baseURL + hash_name[-1]
+            request_url = baseURL + hash_name[-1]
             # Create json
             try:
-                page = requests.get(request_URL)
-                # print("RequestURL:" + request_URL)
+                page = requests.get(request_url)
+                # print("RequestURL:" + request_url)
                 page.raise_for_status()
             except requests.HTTPError:
-                print("Unable to make request for item" + item["Name"])
+                print("Unable to make request for item" + item.name)
                 continue
 
             json_dict = page.json()
@@ -144,7 +188,7 @@ class SteamScraperApp:
                 "Name: " + item.name + '\n' +
                 "Purchase Price: " + item.purchase_price + '\n' +
                 "Median Price: " + json_dict[u'median_price'] + '\n' +
-                #"Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
+                "Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
                 "Break Even: " + break_even_price + '\n' +
                 "15c Profit: " + fifteen_cent + '\n' +
                 "20c Profit: " + twenty_cent + '\n' +
@@ -180,6 +224,7 @@ class SteamScraperApp:
 
         refresh_button = tkinter.Button(self.root, text="Refresh",command = self.refresh).place(x=0,y=0)
         profile_button = tkinter.Button(self.root, text="Profile", command=self.open_profile).place(x=300 ,y=0)
+        add__to_button = tkinter.Button(self.root,text="Add Item to Inspection List",command=self.open_item_adder).place(x=150,y=0)
         self.root.mainloop()
 
 # item1 = Weapon('http://steamcommunity.com/market/listings/730/AK-47%20%7C%20Redline%20(Field-Tested)','AK-47 | Redline (Field Tested)','5.75')
@@ -199,11 +244,12 @@ class SteamScraperApp:
 # x.list_items()
 
 l_o_i_read= []
-csv_file = open('market_store.txt')
-read_csv = csv.reader(csv_file,delimiter=',')
-print(read_csv)
-for row in read_csv:
-    l_o_i_read.append(Weapon(row[0],row[1],row[2]))
+
+with open('market_store.txt') as csv_file:
+    read_csv = csv.reader(csv_file,delimiter=',')
+    print(read_csv)
+    for row in read_csv:
+        l_o_i_read.append(Weapon(row[0],row[1],row[2]))
 
 print(l_o_i_read)
 x = SteamScraperApp(l_o_i_read)
