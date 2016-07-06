@@ -24,8 +24,8 @@ class ProfileSearch:
         self.root.mainloop()
 
     def GotoProfile(self):
-        self.profile_id = str(self.profile_arg.get())
-        if(len(self.profile_id) != 17):
+        profile_id = str(self.profile_arg.get())
+        if(len(profile_id) != 17):
             top = tkinter.Toplevel()
             top.title("Error")
 
@@ -35,13 +35,13 @@ class ProfileSearch:
             button = tkinter.Button(top, text="Dismiss", command=top.destroy)
             button.pack()
             return
-        self.profile_URL = base_profile_URL+self.profile_id
+        profile_URL = base_profile_URL + profile_id
         # print(self.profile_URL)
         try:
-            self.page = requests.get(self.profile_URL)
-            self.page.raise_for_status()
+            page = requests.get(profile_URL)
+            page.raise_for_status()
             # print(self.page)
-            y = ProfileDisplay(self.page)
+            y = ProfileDisplay(page)
         except requests.HTTPError:
             print('Profile URL Not Found')
 
@@ -67,6 +67,8 @@ class ProfileDisplay:
         self.page_dict_list = self.page_dict['response']['players'][0]
         if self.page_dict_list['personastate'] == 1:
             self.online_status = 'Online'
+        else:
+            self.online_status = 'Offline'
         # Display profile image ----------------------------------------------
         self.r = requests.get(self.page_dict_list['avatarfull'])
         self.img = PIL.Image.open(BytesIO(self.r.content))
@@ -87,7 +89,7 @@ class ProfileDisplay:
 # Must take in link as argument.
 # Optional arguments: item name and purchase price (string)
 class Weapon:
-    def __init__(self, link_p,*args):
+    def __init__(self, link_p, *args):
         self.url = link_p
         if(args[0] != None):
             self.name = args[0]
@@ -119,35 +121,35 @@ class AddItem:
         self.root.mainloop()
 
     def AddToList(self):
-        self.temp1 = self.link_arg.get()
+        temp1 = self.link_arg.get()
         # test if link entered is a valid connection
         try:
-            self.r = requests.get(self.temp1)
+            r = requests.get(temp1)
             # raise signal if not a valid link
-            self.r.raise_for_status()
+            r.raise_for_status()
 
         except requests.HTTPError:
             print("Error - Cannot Access Link. Please  make sure Link is valid or if Steam is down")
-            self.error_popup = tkinter.Toplevel()
-            self.error_popup.title('Error')
-            self.error__label = tkinter.Label(self.error_popup, text='Cannot Access Link. Please  make sure Link is valid or if Steam is down')
-            self.error_popup.after(3000, self.error_popup.destroy)
-            self.error_popup.mainloop()
-        self.temp2 = self.name_arg.get()
-        self.temp3 = str(self.price_arg.get())
+            error_popup = tkinter.Toplevel()
+            error_popup.title('Error')
+            error__label = tkinter.Label(error_popup, text='Cannot Access Link. Please  make sure Link is valid or if Steam is down')
+            error_popup.after(3000, error_popup.destroy)
+            error_popup.mainloop()
+        temp2 = self.name_arg.get()
+        temp3 = str(self.price_arg.get())
 
         # Check for duplicate links
         with open('market_store.txt','r') as csv_file:
             read_csv = csv.reader(csv_file, delimiter=',')
             line_counter = 0
             for row in read_csv:
-                if row[0] == self.temp1:
+                if row[0] == temp1:
                     print('Duplicate found at line ' + str(line_counter) + '.\n')
                     return
                 line_counter += 1
         # Did not find any duplicate links
         with open('market_store.txt', 'a') as f:
-            f.write(self.temp1 + ',' + self.temp2 + ',' + self.temp3)
+            f.write(temp1 + ',' + temp2 + ',' + temp3)
         self.root.destroy()
 class Calculator:
     def __init__(self):
@@ -178,6 +180,7 @@ class Calculator:
 
         self.calc_results_popup.mainloop()
 
+
     # Takes in a list of Weapon objects.
 class SteamScraperApp:
     def __init__(self, list_of_items_p):
@@ -193,12 +196,15 @@ class SteamScraperApp:
         self.price_label.grid_forget()
         self.list_items()
 
+    # @staticmethod
     def open_profile(self):
         x = ProfileSearch()
 
+    # @staticmethod
     def open_item_adder(self):
         z = AddItem()
 
+    # @staticmethod
     def open_calculator(self):
         xy = Calculator()
 
@@ -265,10 +271,14 @@ class SteamScraperApp:
             # Increment row for formatting purposes
             self.row_counter += 1
 
-        refresh_button = tkinter.Button(self.root, text="Refresh", command=self.refresh).place(x=0, y=0)
-        profile_button = tkinter.Button(self.root, text="Profile", command=self.open_profile).place(x=300, y=0)
-        add__to_button = tkinter.Button(self.root, text="Add Item to Inspection List", command=self.open_item_adder).place(x=150, y=0)
-        calc_button    = tkinter.Button(self.root, text="Calculator", command=self.open_calculator).place(x=100, y=0)
+        refresh_button = tkinter.Button(self.root, text="Refresh", command=self.refresh)
+        refresh_button.place(x=0, y=0)
+        profile_button = tkinter.Button(self.root, text="Profile", command=self.open_profile)
+        profile_button.place(x=300, y=0)
+        add__to_button = tkinter.Button(self.root, text="Add Item to Inspection List", command=self.open_item_adder)
+        add__to_button.place(x=150, y=0)
+        calc_button    = tkinter.Button(self.root, text="Calculator", command=self.open_calculator)
+        calc_button.place(x=100, y=0)
         self.root.mainloop()
 
 l_o_i_read = []
