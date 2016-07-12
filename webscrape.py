@@ -1,12 +1,16 @@
+import wx
 from lxml import html
 import requests
 import PIL.Image
 import PIL.ImageTk
-import tkinter
+import Tkinter
 from io import BytesIO
+import webbrowser
 import csv
-#######################################################################################################
-# root = tkinter.Tk()
+
+TRAY_TOOLTIP = 'System Tray Demo'
+TRAY_ICON = 'icon.png'
+
 api_key = '7C28D264D4A05EB3ED84423B00F0F392'
 base_profile_URL = ('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
                     + '?key=7C28D264D4A05EB3ED84423B00F0F392&steamids=')
@@ -16,23 +20,23 @@ steamTax = 1.15
 baseURL = 'http://steamcommunity.com/market/priceoverview/?currency=13&appid=730&market_hash_name='
 class ProfileSearch:
     def __init__(self):
-        self.root = tkinter.Toplevel()
-        # self.search_param = tkinter.StringVar()
-        self.profile_arg = tkinter.IntVar()
-        self.profile_button = tkinter.Button(self.root, text="Enter 64bit Steam ID", command = self.GotoProfile).grid(row=0, column=0)
-        self.profile_entry = tkinter.Entry(self.root, textvariable=self.profile_arg).grid(row=0, column=2)
+        self.root = Tkinter.Toplevel()
+        # self.search_param = Tkinter.StringVar()
+        self.profile_arg = Tkinter.IntVar()
+        self.profile_button = Tkinter.Button(self.root, text="Enter 64bit Steam ID", command = self.GotoProfile).grid(row=0, column=0)
+        self.profile_entry = Tkinter.Entry(self.root, textvariable=self.profile_arg).grid(row=0, column=2)
         self.root.mainloop()
 
     def GotoProfile(self):
         profile_id = str(self.profile_arg.get())
         if(len(profile_id) != 17):
-            top = tkinter.Toplevel()
+            top = Tkinter.Toplevel()
             top.title("Error")
 
-            msg = tkinter.Message(top, text="Invalid Profile ID")
+            msg = Tkinter.Message(top, text="Invalid Profile ID")
             msg.pack()
 
-            button = tkinter.Button(top, text="Dismiss", command=top.destroy)
+            button = Tkinter.Button(top, text="Dismiss", command=top.destroy)
             button.pack()
             return
         profile_URL = base_profile_URL + profile_id
@@ -44,22 +48,20 @@ class ProfileSearch:
             y = ProfileDisplay(page)
         except requests.HTTPError:
             print('Profile URL Not Found')
-
-
 class ProfileDisplay:
     def __init__(self, page):
-        self.root = tkinter.Toplevel()
+        self.root = Tkinter.Toplevel()
         self.page = page
         self.page_dict = self.page.json()
         # Check to see if player proile exists based on the 64 bit ID number
         if len(self.page_dict['response']['players']) == 0:
-            top = tkinter.Toplevel()
+            top = Tkinter.Toplevel()
             top.title("Error")
 
-            msg = tkinter.Message(top, text="Player not found")
+            msg = Tkinter.Message(top, text="Player not found")
             msg.pack()
 
-            button = tkinter.Button(top, text="Dismiss", command=top.destroy)
+            button = Tkinter.Button(top, text="Dismiss", command=top.destroy)
             button.pack()
             self.root.destroy()
             return
@@ -74,7 +76,7 @@ class ProfileDisplay:
         self.img = PIL.Image.open(BytesIO(self.r.content))
         self.img = self.img.resize((150, 150), PIL.Image.ANTIALIAS)
         self.photo = PIL.ImageTk.PhotoImage(self.img)
-        self.img_label = tkinter.Label(self.root, image=self.photo)
+        self.img_label = Tkinter.Label(self.root, image=self.photo)
         self.img_label.pack()
 
 
@@ -83,11 +85,8 @@ class ProfileDisplay:
             'Profile URL: ' + self.page_dict_list['profileurl'] + '\n' +
             'Online Status: ' + self.online_status
         )
-        self.text_label = tkinter.Label(self.root,text = self.text).pack()
+        self.text_label = Tkinter.Label(self.root,text = self.text).pack()
         self.root.mainloop()
-
-# Must take in link as argument.
-# Optional arguments: item name and purchase price (string)
 class Weapon:
     def __init__(self, link_p, *args):
         self.url = link_p
@@ -99,25 +98,24 @@ class Weapon:
             self.purchase_price = args[1]
         else:
             self.purchase_price = '0'
-
 class AddItem:
     def __init__(self):
-        self.root = tkinter.Toplevel()
+        self.root = Tkinter.Toplevel()
         # Need 3 StringVar/IntVar
-        self.link_arg = tkinter.StringVar()
-        self.name_arg = tkinter.StringVar()
-        self.price_arg= tkinter.IntVar()
+        self.link_arg = Tkinter.StringVar()
+        self.name_arg = Tkinter.StringVar()
+        self.price_arg= Tkinter.DoubleVar()
         # Need 3 Entry Fields
-        self.link_entry = tkinter.Entry(self.root, textvariable=self.link_arg).grid(row=2, column=3)
-        self.name_entry = tkinter.Entry(self.root, textvariable=self.name_arg).grid(row=1, column=3)
-        self.price_entry= tkinter.Entry(self.root, textvariable=self.price_arg).grid(row=3, column=3)
+        self.link_entry = Tkinter.Entry(self.root, textvariable=self.link_arg).grid(row=2, column=3)
+        self.name_entry = Tkinter.Entry(self.root, textvariable=self.name_arg).grid(row=1, column=3)
+        self.price_entry= Tkinter.Entry(self.root, textvariable=self.price_arg).grid(row=3, column=3)
         #Need 3 Labels for Text for Entry
-        self.name_label = tkinter.Label(self.root,text="Name: ").grid(row=1,column=2)
-        self.link_label = tkinter.Label(self.root, text="Link: ").grid(row=2, column=2)
-        self.price_label= tkinter.Label(self.root, text="Price: ").grid(row=3, column=2)
+        self.name_label = Tkinter.Label(self.root,text="Name: ").grid(row=1,column=2)
+        self.link_label = Tkinter.Label(self.root, text="Link: ").grid(row=2, column=2)
+        self.price_label= Tkinter.Label(self.root, text="Price: ").grid(row=3, column=2)
 
         # Button to add entries to market_store.txt
-        self.add_button = tkinter.Button(self.root,text="Add to List",command=self.AddToList).grid(row=4,column=4)
+        self.add_button = Tkinter.Button(self.root,text="Add to List",command=self.AddToList).grid(row=4,column=4)
         self.root.mainloop()
 
     def AddToList(self):
@@ -130,9 +128,9 @@ class AddItem:
 
         except requests.HTTPError:
             print("Error - Cannot Access Link. Please  make sure Link is valid or if Steam is down")
-            error_popup = tkinter.Toplevel()
+            error_popup = Tkinter.Toplevel()
             error_popup.title('Error')
-            error__label = tkinter.Label(error_popup, text='Cannot Access Link. Please  make sure Link is valid or if Steam is down')
+            error__label = Tkinter.Label(error_popup, text='Cannot Access Link. Please  make sure Link is valid or if Steam is down')
             error_popup.after(3000, error_popup.destroy)
             error_popup.mainloop()
         temp2 = self.name_arg.get()
@@ -145,6 +143,11 @@ class AddItem:
             for row in read_csv:
                 if row[0] == temp1:
                     print('Duplicate found at line ' + str(line_counter) + '.\n')
+                    duplicate_popup = Tkinter.Toplevel()
+                    duplicate_label = Tkinter.Label(duplicate_popup,text="Duplicate found at line " + str(line_counter + 1))
+                    duplicate_label.pack()
+                    duplicate_popup.title("Error - Duplicate Link Found")
+                    duplicate_popup.mainloop()
                     return
                 line_counter += 1
         # Did not find any duplicate links
@@ -153,21 +156,21 @@ class AddItem:
         self.root.destroy()
 class Calculator:
     def __init__(self):
-        self.root = tkinter.Toplevel()
+        self.root = Tkinter.Toplevel()
         self.root.title("Calculator")
 
         # Display entry box-----------------
-        self.price_arg = tkinter.DoubleVar()
-        self.price_label = tkinter.Label(self.root, text='Enter price')
+        self.price_arg = Tkinter.DoubleVar()
+        self.price_label = Tkinter.Label(self.root, text='Enter price')
         self.price_label.pack()
-        self.price_entry = tkinter.Entry(self.root, textvariable=self.price_arg)
+        self.price_entry = Tkinter.Entry(self.root, textvariable=self.price_arg)
         self.price_entry.pack()
-        self.price_button = tkinter.Button(self.root, text ="Calculate!",command=self.LaunchCalculation).pack()
+        self.price_button = Tkinter.Button(self.root, text ="Calculate!",command=self.LaunchCalculation).pack()
         # Display info
         self.root.mainloop()
 
     def LaunchCalculation(self):
-        self.calc_results_popup = tkinter.Toplevel()
+        self.calc_results_popup = Tkinter.Toplevel()
         # Get value (int)
         value = self.price_arg.get()
         print(value)
@@ -176,7 +179,7 @@ class Calculator:
         text_to_display = ('Break even value: ' + str(break_even_value) + '\n' +
                             '15c Profit: ' + str(fifteen_cent_profit) + '\n'
                            )
-        self.text_label = tkinter.Label(self.calc_results_popup,text=text_to_display).pack()
+        self.text_label = Tkinter.Label(self.calc_results_popup,text=text_to_display).pack()
 
         self.calc_results_popup.mainloop()
 
@@ -188,7 +191,8 @@ class SteamScraperApp:
         self.l_arr = []
         self.row_counter = 0
         self.column = 0
-        self.root = tkinter.Tk()
+        self.root = Tkinter.Tk()
+        self.list_items()
 
     def refresh(self):
         self.row_counter = 0
@@ -207,6 +211,9 @@ class SteamScraperApp:
     # @staticmethod
     def open_calculator(self):
         xy = Calculator()
+
+    def open_steam_status(self):
+        webbrowser.open('https://steamstat.us/',new=2)
 
     def list_items(self):
         for item in self.list_of_items:
@@ -234,10 +241,10 @@ class SteamScraperApp:
 
             json_dict = page.json()
             text_to_display = (
-                "Name: " + item.name + '\n' +
+                "\n\nName: " + item.name + '\n' +
                 "Purchase Price: " + item.purchase_price + '\n' +
                 "Median Price: " + json_dict[u'median_price'] + '\n' +
-                "Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
+                #"Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
                 "Break Even: " + break_even_price + '\n' +
                 "15c Profit: " + fifteen_cent + '\n' +
                 "20c Profit: " + twenty_cent + '\n' +
@@ -245,7 +252,7 @@ class SteamScraperApp:
                 "30c Profit: " + thrity_cent + '\n' +
                 "--------------------------------------------------\n"
             )
-            self.price_label = tkinter.Label(self.root, text=text_to_display)
+            self.price_label = Tkinter.Label(self.root, text=text_to_display)
             self.price_label.grid(row=self.row_counter, column=0)
             # Display the image -------------------------------------------------------------------------
             # Get img_url
@@ -264,32 +271,83 @@ class SteamScraperApp:
             img = PIL.Image.open(BytesIO(r.content))
             img = img.resize((150, 150), PIL.Image.ANTIALIAS)
             photo = PIL.ImageTk.PhotoImage(img)
-            img_label = tkinter.Label(self.root, image=photo)
+            img_label = Tkinter.Label(self.root, image=photo)
             img_label.grid(row=self.row_counter, column=2)
             self.l_arr.append(photo)
 
             # Increment row for formatting purposes
             self.row_counter += 1
 
-        refresh_button = tkinter.Button(self.root, text="Refresh", command=self.refresh)
+        refresh_button = Tkinter.Button(self.root, text="Refresh", command=self.refresh)
         refresh_button.place(x=0, y=0)
-        profile_button = tkinter.Button(self.root, text="Profile", command=self.open_profile)
-        profile_button.place(x=300, y=0)
-        add__to_button = tkinter.Button(self.root, text="Add Item to Inspection List", command=self.open_item_adder)
-        add__to_button.place(x=150, y=0)
-        calc_button    = tkinter.Button(self.root, text="Calculator", command=self.open_calculator)
-        calc_button.place(x=100, y=0)
+
+        profile_button = Tkinter.Button(self.root, text="Profile", command=self.open_profile)
+        profile_button.place(x=350, y=0)
+        add__to_button = Tkinter.Button(self.root, text="Add Item to List", command=self.open_item_adder)
+        add__to_button.place(x=250, y=0)
+        calc_button    = Tkinter.Button(self.root, text="Calculator", command=self.open_calculator)
+        calc_button.place(x=170, y=0)
+        service_stat_button = Tkinter.Button(self.root, text="Steam Service Stat", command=self.open_steam_status)
+        service_stat_button.place(x=50, y=0)
         self.root.mainloop()
 
-l_o_i_read = []
-with open('market_store.txt') as csv_file:
-    read_csv = csv.reader(csv_file, delimiter=',')
-    print(read_csv)
-    for row in read_csv:
-        l_o_i_read.append(Weapon(row[0], row[1], row[2]))
+def create_menu_item(menu, label, func):
+    item = wx.MenuItem(menu, -1, label)
+    menu.Bind(wx.EVT_MENU, func, id=item.GetId())
+    menu.AppendItem(item)
+    return item
 
-print(l_o_i_read)
-x = SteamScraperApp(l_o_i_read)
-x.list_items()
-# csv_file.close()
-# Terminate program
+class TaskBarIcon(wx.TaskBarIcon):
+    def __init__(self, frame):
+        self.frame = frame
+        super(TaskBarIcon, self).__init__()
+        self.set_icon(TRAY_ICON)
+        self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
+
+    def CreatePopupMenu(self):
+        menu = wx.Menu()
+        create_menu_item(menu, 'Open', self.OpenWindow)
+        menu.AppendSeparator()
+        create_menu_item(menu, 'Exit', self.on_exit)
+        return menu
+
+    def set_icon(self, path):
+        icon = wx.IconFromBitmap(wx.Bitmap(path))
+        self.SetIcon(icon, TRAY_TOOLTIP)
+
+    def on_left_down(self, event):
+        print 'Tray icon was left-clicked.'
+
+    def on_hello(self, event):
+        print 'Hello, world!'
+
+    def on_exit(self, event):
+        wx.CallAfter(self.Destroy)
+        self.frame.Close()
+
+    def OpenWindow(self, event):
+        x = SteamScraperApp(l_o_i_read)
+
+class App(wx.App):
+    def OnInit(self):
+        frame=wx.Frame(None)
+        self.SetTopWindow(frame)
+        TaskBarIcon(frame)
+        return True
+
+def main():
+    app = App(False)
+
+
+    with open('market_store.txt') as csv_file:
+        read_csv = csv.reader(csv_file, delimiter=',')
+        print(read_csv)
+        for row in read_csv:
+            l_o_i_read.append(Weapon(row[0], row[1], row[2]))
+
+    app.MainLoop()
+
+l_o_i_read = []
+
+if __name__ == '__main__':
+    main()
