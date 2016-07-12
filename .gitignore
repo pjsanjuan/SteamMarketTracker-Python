@@ -1,2 +1,5 @@
 /.idea
 /.build
+/._pycache_
+/.build
+/.dist
