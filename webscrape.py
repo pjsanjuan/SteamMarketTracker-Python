@@ -159,7 +159,7 @@ class AddItem:
         temp3 = str(self.price_arg.get())
 
         # Check for duplicate links
-        with open('market_store.txt','r') as csv_file:
+        with open('market_sell.txt','r') as csv_file:
             read_csv = csv.reader(csv_file, delimiter=',')
             line_counter = 0
             for row in read_csv:
@@ -173,7 +173,7 @@ class AddItem:
                     return
                 line_counter += 1
         # Did not find any duplicate links
-        with open('market_store.txt', 'a') as f:
+        with open('market_sell.txt', 'a') as f:
             f.write(temp1 + ',' + temp2 + ',' + temp3 + '\n')
         self.root.destroy()
 
@@ -440,7 +440,7 @@ def CheckPrices_Sell():
 
 def main():
     app = App(False)
-    with open('market_store.txt') as csv_file:
+    with open('market_sell.txt') as csv_file:
         read_csv = csv.reader(csv_file, delimiter=',')
         print(read_csv)
         for row in read_csv:
