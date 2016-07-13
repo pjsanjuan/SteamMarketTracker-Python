@@ -22,11 +22,19 @@ baseURL = 'http://steamcommunity.com/market/priceoverview/?currency=13&appid=730
 
 class ProfileSearch:
     def __init__(self):
-        self.root = Tkinter.Toplevel()
+        global root
+        if (root == None):
+            root = Tkinter.Tk()
+            self.root = root
+            print 'root is taken by' + str(self)
+        else:
+            self.root = Tkinter.Toplevel()
+        self.root.title('Profile Viewer')
         # self.search_param = Tkinter.StringVar()
         self.profile_arg = Tkinter.IntVar()
         self.profile_button = Tkinter.Button(self.root, text="Enter 64bit Steam ID", command = self.GotoProfile).grid(row=0, column=0)
         self.profile_entry = Tkinter.Entry(self.root, textvariable=self.profile_arg).grid(row=0, column=2)
+        self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
     def GotoProfile(self):
@@ -50,6 +58,11 @@ class ProfileSearch:
             y = ProfileDisplay(page)
         except requests.HTTPError:
             print('Profile URL Not Found')
+
+    def root_owner_caller(self):
+        checkForRootOwnership(self.root)
+        self.root.destroy()
+
 class ProfileDisplay:
     def __init__(self, page):
         self.root = Tkinter.Toplevel()
@@ -100,7 +113,14 @@ class Weapon:
             self.purchase_price = '0'
 class AddItem:
     def __init__(self):
-        self.root = Tkinter.Toplevel()
+        global root
+        if (root == None):
+            root = Tkinter.Tk()
+            self.root = root
+            print 'root is taken by' + str(self)
+        else:
+            self.root = Tkinter.Toplevel()
+
         self.root.title('Add Item to List')
         # Need 3 StringVar/IntVar
         self.link_arg = Tkinter.StringVar()
@@ -117,6 +137,7 @@ class AddItem:
 
         # Button to add entries to market_store.txt
         self.add_button = Tkinter.Button(self.root, text="Add to List", command=self.AddToSellList).grid(row=4, column=4)
+        self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
     def AddToSellList(self):
@@ -154,6 +175,10 @@ class AddItem:
         # Did not find any duplicate links
         with open('market_store.txt', 'a') as f:
             f.write(temp1 + ',' + temp2 + ',' + temp3 + '\n')
+        self.root.destroy()
+
+    def root_owner_caller(self):
+        checkForRootOwnership(self.root)
         self.root.destroy()
 class Calculator:
     def __init__(self):
@@ -194,17 +219,6 @@ class Calculator:
         fifteen_cent_profit = (value + 0.15) * steamTax
         self.price_0result.set(break_even_value)
         self.price_15result.set(fifteen_cent_profit)
-
-        # # Get value (int)
-        # value = self.price_arg.get()
-        # print(value)
-        # break_even_value = value * steamTax
-        # fifteen_cent_profit = (value+0.15)*steamTax
-        # text_to_display = ('Break even value: ' + str(break_even_value) + '\n' +
-        #                     '15c Profit: ' + str(fifteen_cent_profit) + '\n'
-        #                    )
-        # self.text_label = Tkinter.Label(self.calc_results_popup,text=text_to_display).pack()
-        # self.calc_results_popup.mainloop()
 
     def root_owner_caller(self):
         checkForRootOwnership(self.root)
@@ -345,7 +359,6 @@ def create_menu_item(menu, label, func):
     menu.AppendItem(item)
     return item
 
-
 ####################################################################
 class TaskBarIcon(wx.TaskBarIcon):
     def __init__(self, frame):
@@ -356,8 +369,10 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
-        create_menu_item(menu, 'Open', self.OpenWindow)
+        create_menu_item(menu, 'Open', self.OpenApp)
         create_menu_item(menu, 'Calculator', self.OpenCalculator)
+        create_menu_item(menu, 'Add Item to List', self.OpenAddItem)
+        create_menu_item(menu, 'Profile Viewer',self.OpenProfileViewer)
         menu.AppendSeparator()
         create_menu_item(menu, 'Exit', self.on_exit)
         return menu
@@ -369,18 +384,21 @@ class TaskBarIcon(wx.TaskBarIcon):
     def on_left_down(self, event):
         print 'Tray icon was left-clicked.'
 
-    def on_hello(self, event):
-        print 'Hello, world!'
-
     def on_exit(self, event):
         wx.CallAfter(self.Destroy)
         self.frame.Close()
 
-    def OpenWindow(self, event):
+    def OpenApp(self, event):
         SteamScraperApp(items_sell)
 
     def OpenCalculator(self,event):
         Calculator()
+
+    def OpenAddItem(self, event):
+        AddItem()
+
+    def OpenProfileViewer(self,event):
+        ProfileSearch()
 
 class App(wx.App):
     def OnInit(self):
@@ -389,13 +407,6 @@ class App(wx.App):
         TaskBarIcon(frame)
         return True
 
-# def PrintHello():
-#     Timer(30.0,PrintHello).start()
-#     msg = wx.NotificationMessage()
-#     msg.SetTitle('New Message')
-#     msg.SetMessage('Hello World How are you?')
-#     msg.Show()
-#     print 'Hello World'
 
 def CheckPrices_Sell():
     Timer(600.0, CheckPrices_Sell).start()
@@ -421,15 +432,11 @@ def CheckPrices_Sell():
                 possible_sell_itmes.append(item.name)
         except KeyError:
             continue
-
     if possible_sell_itmes:
         msg = wx.NotificationMessage()
         msg.SetTitle('Items to sell')
         msg.SetMessage(str(possible_sell_itmes))
         msg.Show()
-
-
-
 
 def main():
     app = App(False)
@@ -446,11 +453,7 @@ def main():
             items_buy.append(Weapon(row[0], row[1], row[2]))
 
     CheckPrices_Sell()
-    # PrintHello()
     app.MainLoop()
-
-
-
 
 items_sell = [] # market_store
 items_buy = []  # market_buy
