@@ -7,6 +7,7 @@ import Tkinter
 from io import BytesIO
 import webbrowser
 import csv
+from threading import Timer
 
 TRAY_TOOLTIP = 'System Tray Demo'
 TRAY_ICON = 'icon.png'
@@ -53,7 +54,7 @@ class ProfileDisplay:
         self.root = Tkinter.Toplevel()
         self.page = page
         self.page_dict = self.page.json()
-        # Check to see if player proile exists based on the 64 bit ID number
+        # Check to see if player profile exists based on the 64 bit ID number
         if len(self.page_dict['response']['players']) == 0:
             top = Tkinter.Toplevel()
             top.title("Error")
@@ -78,8 +79,6 @@ class ProfileDisplay:
         self.photo = PIL.ImageTk.PhotoImage(self.img)
         self.img_label = Tkinter.Label(self.root, image=self.photo)
         self.img_label.pack()
-
-
         self.text = (
             'Name: ' + self.page_dict_list['personaname'] + '\n' +
             'Profile URL: ' + self.page_dict_list['profileurl'] + '\n' +
@@ -156,7 +155,13 @@ class AddItem:
         self.root.destroy()
 class Calculator:
     def __init__(self):
-        self.root = Tkinter.Toplevel()
+        global root
+        if (root == None):
+            root = Tkinter.Tk()
+            self.root = root
+            print 'root is taken by' + str(self)
+        else:
+            self.root = Tkinter.Toplevel()
         self.root.title("Calculator")
 
         # Display entry box-----------------
@@ -167,6 +172,7 @@ class Calculator:
         self.price_entry.pack()
         self.price_button = Tkinter.Button(self.root, text ="Calculate!",command=self.LaunchCalculation).pack()
         # Display info
+        self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
     def LaunchCalculation(self):
@@ -183,15 +189,25 @@ class Calculator:
 
         self.calc_results_popup.mainloop()
 
+    def root_owner_caller(self):
+        checkForRootOwnership(self.root)
+        self.root.destroy()
 
     # Takes in a list of Weapon objects.
 class SteamScraperApp:
     def __init__(self, list_of_items_p):
+        # self.root = None
+        global root
+        if (root == None):
+            root = Tkinter.Tk()
+            self.root = root
+            print 'root is taken by' + str(self)
+        else:
+            self.root = Tkinter.Toplevel()
         self.list_of_items = list_of_items_p
         self.l_arr = []
         self.row_counter = 0
         self.column = 0
-        self.root = Tkinter.Tk()
         self.list_items()
 
     def refresh(self):
@@ -214,6 +230,10 @@ class SteamScraperApp:
 
     def open_steam_status(self):
         webbrowser.open('https://steamstat.us/',new=2)
+
+    def root_owner_caller(self):
+        checkForRootOwnership(self.root)
+        self.root.destroy()
 
     def list_items(self):
         for item in self.list_of_items:
@@ -240,18 +260,21 @@ class SteamScraperApp:
                 continue
 
             json_dict = page.json()
-            text_to_display = (
-                "\n\nName: " + item.name + '\n' +
-                "Purchase Price: " + item.purchase_price + '\n' +
-                "Median Price: " + json_dict[u'median_price'] + '\n' +
-                #"Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
-                "Break Even: " + break_even_price + '\n' +
-                "15c Profit: " + fifteen_cent + '\n' +
-                "20c Profit: " + twenty_cent + '\n' +
-                "25c Profit: " + twenty_five_cent + '\n' +
-                "30c Profit: " + thrity_cent + '\n' +
-                "--------------------------------------------------\n"
-            )
+            try:
+                text_to_display = (
+                    "\n\nName: " + item.name + '\n' +
+                    "Purchase Price: " + item.purchase_price + '\n' +
+                    "Median Price: " + json_dict[u'median_price'] + '\n' +
+                    "Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
+                    "Break Even: " + break_even_price + '\n' +
+                    "15c Profit: " + fifteen_cent + '\n' +
+                    "20c Profit: " + twenty_cent + '\n' +
+                    "25c Profit: " + twenty_five_cent + '\n' +
+                    "30c Profit: " + thrity_cent + '\n' +
+                    "--------------------------------------------------\n"
+                )
+            except KeyError:
+                text_to_display = 'Key error. Please refresh in a few minutes.'
             self.price_label = Tkinter.Label(self.root, text=text_to_display)
             self.price_label.grid(row=self.row_counter, column=0)
             # Display the image -------------------------------------------------------------------------
@@ -289,7 +312,15 @@ class SteamScraperApp:
         calc_button.place(x=170, y=0)
         service_stat_button = Tkinter.Button(self.root, text="Steam Service Stat", command=self.open_steam_status)
         service_stat_button.place(x=50, y=0)
+        self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
+
+
+def checkForRootOwnership(root_param):
+    global root
+    if root_param == root and root != None:
+        root = None
+        print 'root is freed by ' + str(root_param)
 
 def create_menu_item(menu, label, func):
     item = wx.MenuItem(menu, -1, label)
@@ -297,6 +328,8 @@ def create_menu_item(menu, label, func):
     menu.AppendItem(item)
     return item
 
+
+####################################################################
 class TaskBarIcon(wx.TaskBarIcon):
     def __init__(self, frame):
         self.frame = frame
@@ -307,6 +340,7 @@ class TaskBarIcon(wx.TaskBarIcon):
     def CreatePopupMenu(self):
         menu = wx.Menu()
         create_menu_item(menu, 'Open', self.OpenWindow)
+        create_menu_item(menu, 'Calculator', self.OpenCalculator)
         menu.AppendSeparator()
         create_menu_item(menu, 'Exit', self.on_exit)
         return menu
@@ -326,7 +360,10 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.frame.Close()
 
     def OpenWindow(self, event):
-        x = SteamScraperApp(l_o_i_read)
+        SteamScraperApp(items_sell)
+
+    def OpenCalculator(self,event):
+        Calculator()
 
 class App(wx.App):
     def OnInit(self):
@@ -335,19 +372,72 @@ class App(wx.App):
         TaskBarIcon(frame)
         return True
 
+# def PrintHello():
+#     Timer(30.0,PrintHello).start()
+#     msg = wx.NotificationMessage()
+#     msg.SetTitle('New Message')
+#     msg.SetMessage('Hello World How are you?')
+#     msg.Show()
+#     print 'Hello World'
+
+def CheckPrices_Sell():
+    Timer(600.0, CheckPrices_Sell).start()
+    possible_sell_itmes = []
+    for item in items_sell:
+        fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
+        # Split the url using '/' as the delimiter
+        hash_name = item.url.split('/')
+        # Generate the json URL for the item/weapon. Something along the lines of
+        # http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=StatTrak%E2%84%A2%20P250%20%7C%20Steel%20Disruption%20%28Factory%20New%29
+        request_url = baseURL + hash_name[-1]
+        # Create json
+        try:
+            page = requests.get(request_url)
+            # print("RequestURL:" + request_url)
+            page.raise_for_status()
+        except requests.HTTPError:
+            print("Unable to make request for item" + item.name)
+            continue
+        json_dict = page.json()
+        try:
+            if item.purchase_price!=0.0 and json_dict[u'lowest_price'] >= fifteen_cent:
+                possible_sell_itmes.append(item.name)
+        except KeyError:
+            continue
+
+    if possible_sell_itmes:
+        msg = wx.NotificationMessage()
+        msg.SetTitle('Items to sell')
+        msg.SetMessage(str(possible_sell_itmes))
+        msg.Show()
+
+
+
+
 def main():
     app = App(False)
-
-
     with open('market_store.txt') as csv_file:
         read_csv = csv.reader(csv_file, delimiter=',')
         print(read_csv)
         for row in read_csv:
-            l_o_i_read.append(Weapon(row[0], row[1], row[2]))
+            items_sell.append(Weapon(row[0], row[1], row[2]))
 
+    with open('market_buy.txt') as csv_file:
+        read_csv = csv.reader(csv_file, delimiter=',')
+        print(read_csv)
+        for row in read_csv:
+            items_buy.append(Weapon(row[0], row[1], row[2]))
+
+    CheckPrices_Sell()
+    # PrintHello()
     app.MainLoop()
 
-l_o_i_read = []
+
+
+
+items_sell = [] # market_store
+items_buy = []  # market_buy
+root = None
 
 if __name__ == '__main__':
     main()
