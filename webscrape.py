@@ -16,9 +16,10 @@ api_key = '7C28D264D4A05EB3ED84423B00F0F392'
 base_profile_URL = ('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
                     + '?key=7C28D264D4A05EB3ED84423B00F0F392&steamids=')
 steamTax = 1.15
-# 76561198033724063
 # baseURL string. DO NOT MODIFY
 baseURL = 'http://steamcommunity.com/market/priceoverview/?currency=13&appid=730&market_hash_name='
+
+
 class ProfileSearch:
     def __init__(self):
         self.root = Tkinter.Toplevel()
@@ -100,6 +101,7 @@ class Weapon:
 class AddItem:
     def __init__(self):
         self.root = Tkinter.Toplevel()
+        self.root.title('Add Item to List')
         # Need 3 StringVar/IntVar
         self.link_arg = Tkinter.StringVar()
         self.name_arg = Tkinter.StringVar()
@@ -114,17 +116,16 @@ class AddItem:
         self.price_label= Tkinter.Label(self.root, text="Price: ").grid(row=3, column=2)
 
         # Button to add entries to market_store.txt
-        self.add_button = Tkinter.Button(self.root,text="Add to List",command=self.AddToList).grid(row=4,column=4)
+        self.add_button = Tkinter.Button(self.root, text="Add to List", command=self.AddToSellList).grid(row=4, column=4)
         self.root.mainloop()
 
-    def AddToList(self):
+    def AddToSellList(self):
         temp1 = self.link_arg.get()
         # test if link entered is a valid connection
         try:
             r = requests.get(temp1)
             # raise signal if not a valid link
             r.raise_for_status()
-
         except requests.HTTPError:
             print("Error - Cannot Access Link. Please  make sure Link is valid or if Steam is down")
             error_popup = Tkinter.Toplevel()
@@ -132,6 +133,7 @@ class AddItem:
             error__label = Tkinter.Label(error_popup, text='Cannot Access Link. Please  make sure Link is valid or if Steam is down')
             error_popup.after(3000, error_popup.destroy)
             error_popup.mainloop()
+
         temp2 = self.name_arg.get()
         temp3 = str(self.price_arg.get())
 
@@ -151,7 +153,7 @@ class AddItem:
                 line_counter += 1
         # Did not find any duplicate links
         with open('market_store.txt', 'a') as f:
-            f.write(temp1 + ',' + temp2 + ',' + temp3)
+            f.write(temp1 + ',' + temp2 + ',' + temp3 + '\n')
         self.root.destroy()
 class Calculator:
     def __init__(self):
@@ -166,28 +168,43 @@ class Calculator:
 
         # Display entry box-----------------
         self.price_arg = Tkinter.DoubleVar()
-        self.price_label = Tkinter.Label(self.root, text='Enter price')
-        self.price_label.pack()
-        self.price_entry = Tkinter.Entry(self.root, textvariable=self.price_arg)
-        self.price_entry.pack()
+        self.price_0result = Tkinter.DoubleVar()
+        self.price_15result = Tkinter.DoubleVar()
+
+        self.price_input_label = Tkinter.Label(self.root, text='Enter price')
+        self.price_input_label.pack()
+        self.price_input_entry = Tkinter.Entry(self.root, textvariable=self.price_arg)
+        self.price_input_entry.pack()
+
         self.price_button = Tkinter.Button(self.root, text ="Calculate!",command=self.LaunchCalculation).pack()
+
+        self.price_output0_label = Tkinter.Label(self.root, text='Break Even').pack()
+        self.price_output0_entry = Tkinter.Entry(self.root,textvariable=self.price_0result, state='readonly').pack()
+
+        self.price_output15_label = Tkinter.Label(self.root, text='15c Profit').pack()
+        self.price_output15_entry = Tkinter.Entry(self.root, textvariable=self.price_15result, state='readonly').pack()
+
         # Display info
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
     def LaunchCalculation(self):
-        self.calc_results_popup = Tkinter.Toplevel()
-        # Get value (int)
         value = self.price_arg.get()
-        print(value)
         break_even_value = value * steamTax
-        fifteen_cent_profit = (value+0.15)*steamTax
-        text_to_display = ('Break even value: ' + str(break_even_value) + '\n' +
-                            '15c Profit: ' + str(fifteen_cent_profit) + '\n'
-                           )
-        self.text_label = Tkinter.Label(self.calc_results_popup,text=text_to_display).pack()
+        fifteen_cent_profit = (value + 0.15) * steamTax
+        self.price_0result.set(break_even_value)
+        self.price_15result.set(fifteen_cent_profit)
 
-        self.calc_results_popup.mainloop()
+        # # Get value (int)
+        # value = self.price_arg.get()
+        # print(value)
+        # break_even_value = value * steamTax
+        # fifteen_cent_profit = (value+0.15)*steamTax
+        # text_to_display = ('Break even value: ' + str(break_even_value) + '\n' +
+        #                     '15c Profit: ' + str(fifteen_cent_profit) + '\n'
+        #                    )
+        # self.text_label = Tkinter.Label(self.calc_results_popup,text=text_to_display).pack()
+        # self.calc_results_popup.mainloop()
 
     def root_owner_caller(self):
         checkForRootOwnership(self.root)
@@ -440,4 +457,5 @@ items_buy = []  # market_buy
 root = None
 
 if __name__ == '__main__':
+    print 'Compile Complete'
     main()
