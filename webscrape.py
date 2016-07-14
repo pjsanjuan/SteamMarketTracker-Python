@@ -7,6 +7,7 @@ import Tkinter
 from io import BytesIO
 import webbrowser
 import csv
+import json
 from threading import Timer
 
 TRAY_TOOLTIP = 'System Tray Demo'
@@ -18,7 +19,10 @@ base_profile_URL = ('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v
 steamTax = 1.15
 # baseURL string. DO NOT MODIFY
 baseURL = 'http://steamcommunity.com/market/priceoverview/?currency=13&appid=730&market_hash_name='
-
+items_sell = [] # market_store
+items_buy = []  # market_buy
+settings_list = []
+root = None
 
 class ProfileSearch:
     def __init__(self):
@@ -136,30 +140,70 @@ class AddItem:
         self.price_label= Tkinter.Label(self.root, text="Price: ").grid(row=3, column=2)
 
         # Button to add entries to market_store.txt
-        self.add_button = Tkinter.Button(self.root, text="Add to List", command=self.AddToSellList).grid(row=4, column=4)
+        self.add_sell_button = Tkinter.Button(self.root, text="Add to Sell List", command=self.AddToSellList).grid(row=4, column=4)
+        self.add_buy_button = Tkinter.Button(self.root, text="Add to Buy List", command=self.AddToBuyList).grid(row=4, column=3)
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
+    def CreateErrorBox(self, errorMsg):
+        print("Error - " + errorMsg)
+        error_popup = Tkinter.Toplevel()
+        error_popup.title('Error')
+        error__label = Tkinter.Label(error_popup, text=errorMsg).pack()
+        error_popup.after(3000, error_popup.destroy)
+        error_popup.mainloop()
+
+
     def AddToSellList(self):
         temp1 = self.link_arg.get()
+        if('http://steamcommunity.com/market' not in temp1):
+            self.CreateErrorBox('Not a Steam market link. Please try again.')
+            return
         # test if link entered is a valid connection
         try:
             r = requests.get(temp1)
-            # raise signal if not a valid link
-            r.raise_for_status()
+            r.raise_for_status()        # raise signal if not a valid link
         except requests.HTTPError:
-            print("Error - Cannot Access Link. Please  make sure Link is valid or if Steam is down")
-            error_popup = Tkinter.Toplevel()
-            error_popup.title('Error')
-            error__label = Tkinter.Label(error_popup, text='Cannot Access Link. Please  make sure Link is valid or if Steam is down')
-            error_popup.after(3000, error_popup.destroy)
-            error_popup.mainloop()
+            self.CreateErrorBox('Cannot Access Link. Please  make sure Link is valid or if Steam is down')
+
+        temp2 = self.name_arg.get()
+        temp3 = str(self.price_arg.get())
+        # Check for duplicate links
+        with open('market_sell.txt','r') as csv_file:
+            read_csv = csv.reader(csv_file, delimiter=',')
+            line_counter = 0
+            for row in read_csv:
+                if row[0] == temp1:
+                    print('Duplicate found at line ' + str(line_counter) + '.\n')
+                    duplicate_popup = Tkinter.Toplevel()
+                    duplicate_label = Tkinter.Label(duplicate_popup,text="Duplicate found at line " + str(line_counter + 1))
+                    duplicate_label.pack()
+                    duplicate_popup.title("Error - Duplicate Link Found")
+                    duplicate_popup.mainloop()
+                    return
+                line_counter += 1
+        # Did not find any duplicate links
+        with open('market_sell.txt', 'a') as f:
+            f.write(temp1 + ',' + temp2 + ',' + temp3 + '\n')
+        self.root.destroy()
+
+    def AddToBuyList(self):
+        temp1 = self.link_arg.get()
+        if ('http://steamcommunity.com/market' not in temp1):
+            self.CreateErrorBox('Not a Steam market link. Please try again.')
+            return
+        # test if link entered is a valid connection
+        try:
+            r = requests.get(temp1)
+            r.raise_for_status()        # raise signal if not a valid link
+        except requests.HTTPError:
+            self.CreateErrorBox('Cannot Access Link. Please  make sure Link is valid or if Steam is down')
 
         temp2 = self.name_arg.get()
         temp3 = str(self.price_arg.get())
 
         # Check for duplicate links
-        with open('market_sell.txt','r') as csv_file:
+        with open('market_buy.txt', 'r') as csv_file:
             read_csv = csv.reader(csv_file, delimiter=',')
             line_counter = 0
             for row in read_csv:
@@ -238,6 +282,8 @@ class SteamScraperApp:
         self.list_of_items = list_of_items_p
         self.l_arr = []
         self.row_counter = 0
+        self.label_column = 0
+        self.pictu_column = 2
         self.column = 0
         self.list_items()
 
@@ -265,6 +311,10 @@ class SteamScraperApp:
     def root_owner_caller(self):
         checkForRootOwnership(self.root)
         self.root.destroy()
+
+    def ScanForLinkErrorCaller(self):
+        ScanForLinkErrors('market_sell.txt')
+        ScanForLinkErrors('market_buy.txt')
 
     def list_items(self):
         for item in self.list_of_items:
@@ -307,7 +357,7 @@ class SteamScraperApp:
             except KeyError:
                 text_to_display = 'Key error. Please refresh in a few minutes.'
             self.price_label = Tkinter.Label(self.root, text=text_to_display)
-            self.price_label.grid(row=self.row_counter, column=0)
+            self.price_label.grid(row=self.row_counter, column=self.label_column)
             # Display the image -------------------------------------------------------------------------
             # Get img_url
             page = requests.get(item.url)
@@ -326,12 +376,15 @@ class SteamScraperApp:
             img = img.resize((150, 150), PIL.Image.ANTIALIAS)
             photo = PIL.ImageTk.PhotoImage(img)
             img_label = Tkinter.Label(self.root, image=photo)
-            img_label.grid(row=self.row_counter, column=2)
+            img_label.grid(row=self.row_counter, column=self.pictu_column)
             self.l_arr.append(photo)
 
             # Increment row for formatting purposes
             self.row_counter += 1
-
+            if(self.row_counter % 3 == 0):
+                self.label_column += 3
+                self.pictu_column += 3
+                self.row_counter = 0
         refresh_button = Tkinter.Button(self.root, text="Refresh", command=self.refresh)
         refresh_button.place(x=0, y=0)
 
@@ -343,10 +396,12 @@ class SteamScraperApp:
         calc_button.place(x=170, y=0)
         service_stat_button = Tkinter.Button(self.root, text="Steam Service Stat", command=self.open_steam_status)
         service_stat_button.place(x=50, y=0)
+        error_checking_button = Tkinter.Button(self.root, text='Error Check', command=self.ScanForLinkErrorCaller)
+        error_checking_button.place(x=500, y = 0)
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
-
+#####################################################################
 def checkForRootOwnership(root_param):
     global root
     if root_param == root and root != None:
@@ -358,6 +413,62 @@ def create_menu_item(menu, label, func):
     menu.Bind(wx.EVT_MENU, func, id=item.GetId())
     menu.AppendItem(item)
     return item
+
+def CheckPrices_Sell():
+    Timer(600.0, CheckPrices_Sell).start()
+    possible_sell_itmes = []
+    for item in items_sell:
+        fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
+        # Split the url using '/' as the delimiter
+        hash_name = item.url.split('/')
+        # Generate the json URL for the item/weapon. Something along the lines of
+        # http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=StatTrak%E2%84%A2%20P250%20%7C%20Steel%20Disruption%20%28Factory%20New%29
+        request_url = baseURL + hash_name[-1]
+        # Create json
+        try:
+            page = requests.get(request_url)
+            # print("RequestURL:" + request_url)
+            page.raise_for_status()
+        except requests.HTTPError:
+            print("Unable to make request for item" + item.name)
+            continue
+        json_dict = page.json()
+        try:
+            if item.purchase_price!=0.0 and json_dict[u'lowest_price'] >= fifteen_cent:
+                possible_sell_itmes.append(item.name)
+        except KeyError:
+            continue
+    if possible_sell_itmes:
+        msg = wx.NotificationMessage()
+        msg.SetTitle('Items to sell')
+        msg.SetMessage(str(possible_sell_itmes))
+        msg.Show()
+
+def ScanForLinkErrors(file_name):
+    error_flag = False
+    correct_lines = []
+    print 'Starting link error scan'
+    infile = open(file_name,'r')
+    infile_readlines = infile.readlines()
+    for row in infile_readlines:
+        # print row
+        if 'http://steamcommunity.com/market' in row:
+            correct_lines.append(row)
+        else:
+            error_flag = True
+    infile.close()
+
+    open(file_name, 'w').close()
+
+    outfile = open(file_name,'w')
+    for item in correct_lines:
+        outfile.write(item)
+    outfile.close()
+
+
+    print 'Scan complete'
+    if error_flag == True:
+        print 'Errors found and fixed'
 
 ####################################################################
 class TaskBarIcon(wx.TaskBarIcon):
@@ -407,57 +518,34 @@ class App(wx.App):
         TaskBarIcon(frame)
         return True
 
-
-def CheckPrices_Sell():
-    Timer(600.0, CheckPrices_Sell).start()
-    possible_sell_itmes = []
-    for item in items_sell:
-        fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
-        # Split the url using '/' as the delimiter
-        hash_name = item.url.split('/')
-        # Generate the json URL for the item/weapon. Something along the lines of
-        # http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=StatTrak%E2%84%A2%20P250%20%7C%20Steel%20Disruption%20%28Factory%20New%29
-        request_url = baseURL + hash_name[-1]
-        # Create json
-        try:
-            page = requests.get(request_url)
-            # print("RequestURL:" + request_url)
-            page.raise_for_status()
-        except requests.HTTPError:
-            print("Unable to make request for item" + item.name)
-            continue
-        json_dict = page.json()
-        try:
-            if item.purchase_price!=0.0 and json_dict[u'lowest_price'] >= fifteen_cent:
-                possible_sell_itmes.append(item.name)
-        except KeyError:
-            continue
-    if possible_sell_itmes:
-        msg = wx.NotificationMessage()
-        msg.SetTitle('Items to sell')
-        msg.SetMessage(str(possible_sell_itmes))
-        msg.Show()
-
+######################################################################
 def main():
+    ScanForLinkErrors('market_sell.txt')
+    ScanForLinkErrors('market_buy.txt')
+
+    with open('settings.json') as settings:
+        settings_json = json.load(settings)
+        settings.close()
+    # print settings_json["notifications"]
+
     app = App(False)
     with open('market_sell.txt') as csv_file:
         read_csv = csv.reader(csv_file, delimiter=',')
-        print(read_csv)
+        # print(read_csv)
         for row in read_csv:
+            # print row
             items_sell.append(Weapon(row[0], row[1], row[2]))
 
     with open('market_buy.txt') as csv_file:
         read_csv = csv.reader(csv_file, delimiter=',')
-        print(read_csv)
+        # print(read_csv)
         for row in read_csv:
             items_buy.append(Weapon(row[0], row[1], row[2]))
 
-    CheckPrices_Sell()
-    app.MainLoop()
+    if settings_json["notifications"] == 1:
+        CheckPrices_Sell()
 
-items_sell = [] # market_store
-items_buy = []  # market_buy
-root = None
+    app.MainLoop()
 
 if __name__ == '__main__':
     print 'Compile Complete'
