@@ -1,4 +1,5 @@
 {
   "notifications" : 1,
-  "maxresultsperpage" : 3
+  "maxresultsperpage" : 3,
+  "checktime" : 1800
 }

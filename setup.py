@@ -2,7 +2,7 @@ import cx_Freeze
 import sys
 
 
-executables = [cx_Freeze.Executable('webscrape.py', base='Win32GUI')]
+executables = [cx_Freeze.Executable('webscrape.py', base='Win32GUI', icon='icon.ico')]
 
 cx_Freeze.setup(
     name = 'SteamApp',
@@ -11,7 +11,7 @@ cx_Freeze.setup(
     {
         'build_exe': {
             'packages':['Tkinter','lxml.etree','lxml','gzip'],
-            'include_files':['icon.png','market_store.txt','market_buy.txt'],
+            'include_files':['icon.png','market_sell.txt','market_buy.txt','settings.json'],
             'excludes': ['collections.abc']
         }
     },

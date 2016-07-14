@@ -8,7 +8,7 @@ from io import BytesIO
 import webbrowser
 import csv
 import json
-from threading import Timer
+import threading
 
 TRAY_TOOLTIP = 'System Tray Demo'
 TRAY_ICON = 'icon.png'
@@ -21,8 +21,9 @@ steamTax = 1.15
 baseURL = 'http://steamcommunity.com/market/priceoverview/?currency=13&appid=730&market_hash_name='
 items_sell = [] # market_store
 items_buy = []  # market_buy
-settings_list = []
 root = None
+check_thread = None
+
 
 class ProfileSearch:
     def __init__(self):
@@ -414,8 +415,11 @@ def create_menu_item(menu, label, func):
     menu.AppendItem(item)
     return item
 
-def CheckPrices_Sell():
-    Timer(600.0, CheckPrices_Sell).start()
+def CheckPrices_Sell(time_s):
+    global check_thread
+    check_thread = threading.Timer(time_s, CheckPrices_Sell)
+    check_thread.start()
+
     possible_sell_itmes = []
     for item in items_sell:
         fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
@@ -465,7 +469,6 @@ def ScanForLinkErrors(file_name):
         outfile.write(item)
     outfile.close()
 
-
     print 'Scan complete'
     if error_flag == True:
         print 'Errors found and fixed'
@@ -497,6 +500,9 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def on_exit(self, event):
         wx.CallAfter(self.Destroy)
+        # Stop all threads here
+        global check_thread
+        check_thread.cancel()
         self.frame.Close()
 
     def OpenApp(self, event):
@@ -543,7 +549,7 @@ def main():
             items_buy.append(Weapon(row[0], row[1], row[2]))
 
     if settings_json["notifications"] == 1:
-        CheckPrices_Sell()
+        CheckPrices_Sell(settings_json["checktime"])
 
     app.MainLoop()
 
