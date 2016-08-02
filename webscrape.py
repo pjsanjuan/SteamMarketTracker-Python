@@ -281,30 +281,46 @@ class SteamScraperApp:
         else:
             self.root = Tkinter.Toplevel()
         self.list_of_items = list_of_items_p
-        self.l_arr = []
+
+        self.photo_arr = []
+        self.img_label_arr = []
+        self.price_label_arr = []
+
         self.row_counter = 0
         self.label_column = 0
-        self.pictu_column = 2
+        self.picture_column = 2
         self.column = 0
         self.list_items()
 
     def refresh(self):
         self.row_counter = 0
         self.column = 0
-        self.price_label.grid_forget()
+        for item in self.img_label_arr:
+            item.grid_forget()
+            self.img_label_arr.remove(item)
+
+        for item in self.price_label_arr:
+            item.grid_forget()
+            self.price_label_arr.remove(item)
+
+        self.row_counter = 0
+        self.label_column = 0
+        self.picture_column = 2
+        self.column = 0
+
         self.list_items()
 
     # @staticmethod
     def open_profile(self):
-        x = ProfileSearch()
+        ProfileSearch()
 
     # @staticmethod
     def open_item_adder(self):
-        z = AddItem()
+        AddItem()
 
     # @staticmethod
     def open_calculator(self):
-        xy = Calculator()
+        Calculator()
 
     def open_steam_status(self):
         webbrowser.open('https://steamstat.us/',new=2)
@@ -357,12 +373,17 @@ class SteamScraperApp:
                 )
             except KeyError:
                 text_to_display = 'Key error. Please refresh in a few minutes.'
+
             self.price_label = Tkinter.Label(self.root, text=text_to_display)
+            # Write the price label onto the grid
             self.price_label.grid(row=self.row_counter, column=self.label_column)
+            self.price_label_arr.append(self.price_label)
+
             # Display the image -------------------------------------------------------------------------
             # Get img_url
             page = requests.get(item.url)
             tree = html.fromstring(page.content)
+
             # Grab image URL using Xpath
             img_url = tree.xpath('//*[@id="mainContents"]/div[2]/div/div[1]/img/@src')
             try:
@@ -371,24 +392,31 @@ class SteamScraperApp:
                 print("img_url[0] == None:")
                 print(item.url)
                 continue
+
             # Display the image
             r = requests.get(img_url[0])
             img = PIL.Image.open(BytesIO(r.content))
             img = img.resize((150, 150), PIL.Image.ANTIALIAS)
             photo = PIL.ImageTk.PhotoImage(img)
+            # Draw the image onto the grid
             img_label = Tkinter.Label(self.root, image=photo)
-            img_label.grid(row=self.row_counter, column=self.pictu_column)
-            self.l_arr.append(photo)
+            img_label.grid(row=self.row_counter, column=self.picture_column)
+            # img_label.grid_forget()
+            self.photo_arr.append(photo)
+            self.img_label_arr.append(img_label)
 
             # Increment row for formatting purposes
             self.row_counter += 1
             if(self.row_counter % 3 == 0):
                 self.label_column += 3
-                self.pictu_column += 3
+                self.picture_column += 3
                 self.row_counter = 0
+
         refresh_button = Tkinter.Button(self.root, text="Refresh", command=self.refresh)
         refresh_button.place(x=0, y=0)
-
+        error_checking_button = Tkinter.Button(self.root, text='Error Check', command=self.ScanForLinkErrorCaller)
+        error_checking_button.place(x=500, y=0)
+        # Other features of application
         profile_button = Tkinter.Button(self.root, text="Profile", command=self.open_profile)
         profile_button.place(x=350, y=0)
         add__to_button = Tkinter.Button(self.root, text="Add Item to List", command=self.open_item_adder)
@@ -397,12 +425,13 @@ class SteamScraperApp:
         calc_button.place(x=170, y=0)
         service_stat_button = Tkinter.Button(self.root, text="Steam Service Stat", command=self.open_steam_status)
         service_stat_button.place(x=50, y=0)
-        error_checking_button = Tkinter.Button(self.root, text='Error Check', command=self.ScanForLinkErrorCaller)
-        error_checking_button.place(x=500, y = 0)
+
+        # root checker
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
 #####################################################################
+# Allows program to open up individual windows without creating a root item first.
 def checkForRootOwnership(root_param):
     global root
     if root_param == root and root != None:
@@ -415,6 +444,7 @@ def create_menu_item(menu, label, func):
     menu.AppendItem(item)
     return item
 
+# Function that will check prices every time_s seconds and display a notification when items are ready to sell
 def CheckPrices_Sell(time_s):
     global check_thread
     check_thread = threading.Timer(time_s, CheckPrices_Sell)
@@ -448,6 +478,7 @@ def CheckPrices_Sell(time_s):
         msg.SetMessage(str(possible_sell_itmes))
         msg.Show()
 
+# Makes sure that the links in file_name are valid
 def ScanForLinkErrors(file_name):
     error_flag = False
     correct_lines = []
@@ -519,7 +550,7 @@ class TaskBarIcon(wx.TaskBarIcon):
 
 class App(wx.App):
     def OnInit(self):
-        frame=wx.Frame(None)
+        frame = wx.Frame(None)
         self.SetTopWindow(frame)
         TaskBarIcon(frame)
         return True
