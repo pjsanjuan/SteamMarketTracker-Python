@@ -347,16 +347,22 @@ class SteamScraperApp:
         while (arr_s <= self.current_page_number * 2 + 1):
             try:
                 self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
+                self.price_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter +1)
             except IndexError:
                 break
             arr_s += 1
             self.row_counter += 1
         self.row_counter = 0
 
+
     def ForgetPage(self):
         arr_s = self.current_page_number * 2
         while (arr_s <= self.current_page_number * 2 + 1):
-            self.img_label_arr[arr_s].grid_forget()
+            try:
+                self.img_label_arr[arr_s].grid_forget()
+                self.price_label_arr[arr_s].grid_forget()
+            except IndexError:
+                break
             arr_s += 1
 
 
