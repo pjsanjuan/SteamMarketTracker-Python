@@ -9,7 +9,7 @@ import webbrowser
 import csv
 import json
 import threading
-
+import math
 TRAY_TOOLTIP = 'System Tray Demo'
 TRAY_ICON = 'icon.png'
 
@@ -281,20 +281,29 @@ class SteamScraperApp:
         else:
             self.root = Tkinter.Toplevel()
         self.list_of_items = list_of_items_p
-
+        # Arrays used for reference
         self.photo_arr = []
         self.img_label_arr = []
         self.price_label_arr = []
 
+        # # Reset
         self.row_counter = 0
-        self.label_column = 0
-        self.picture_column = 2
-        self.column = 0
+        self.column_counter = 0
+
+        # New display mechanics
+        self.results_per_page = 2
+        self.current_page__img_arr = []
+        self.current_page__lbl_arr = []
+        self.current_page_number = 0
+
+        print 'Current_page_number = ' + str(self.current_page_number)
+        self.max_page_number = 0
+
+        # Re-list items
         self.list_items()
 
     def refresh(self):
-        self.row_counter = 0
-        self.column = 0
+
         for item in self.img_label_arr:
             item.grid_forget()
             self.img_label_arr.remove(item)
@@ -303,10 +312,10 @@ class SteamScraperApp:
             item.grid_forget()
             self.price_label_arr.remove(item)
 
-        self.row_counter = 0
-        self.label_column = 0
-        self.picture_column = 2
-        self.column = 0
+        # self.row_counter = 0
+        # self.label_column = 0
+        # self.picture_column = 2
+        # self.column = 0
 
         self.list_items()
 
@@ -332,6 +341,67 @@ class SteamScraperApp:
     def ScanForLinkErrorCaller(self):
         ScanForLinkErrors('market_sell.txt')
         ScanForLinkErrors('market_buy.txt')
+
+    def DisplayPage(self):
+        pass
+
+
+    def NextPage(self):
+        # Forget the grid in the current page
+        arr_s = self.current_page_number * 2
+        while(arr_s <= self.current_page_number * 2 + 1):
+            self.img_label_arr[arr_s].grid_forget()
+            arr_s += 1
+        #Move over to the new page
+        if(self.current_page_number < self.max_page_number):
+            self.current_page_number+=1     #Increment
+        print 'Current_page_number = ' + str(self.current_page_number)
+        # Re-list new pages
+        arr_s = self.current_page_number * 2
+        while (arr_s <= self.current_page_number * 2 + 1):
+            self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
+            arr_s += 1
+            self.row_counter += 1
+        self.row_counter = 0
+
+        # Enable and Disable Buttons
+        if (self.current_page_number == self.max_page_number):
+            self.next_page_button['state'] = 'disabled'
+            self.prev_page_button['state'] = 'normal'
+        else:
+            self.next_page_button['state'] = 'normal'
+            self.prev_page_button['state'] = 'normal'
+
+
+        print 'Next page button pressed'
+
+    def PrevPage(self):
+        # Forget the grid in the current page
+        arr_s = self.current_page_number * 2
+        while (arr_s <= self.current_page_number * 2 + 1):
+            self.img_label_arr[arr_s].grid_forget()
+            arr_s += 1
+        # Move over to the new page
+        if(self.current_page_number > 0):
+            self.current_page_number-=1     #Decrement
+        print 'Current_page_number = ' + str(self.current_page_number)
+        #Re-list new pages
+        arr_s = self.current_page_number * 2
+        while (arr_s <= self.current_page_number * 2 + 1):
+            self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
+            arr_s += 1
+            self.row_counter += 1
+        self.row_counter = 0
+        # Enable and Disable Buttons
+        if(self.current_page_number == 0):
+            self.prev_page_button['state'] = 'disabled'
+            self.next_page_button['state'] = 'normal'
+        else:
+            self.prev_page_button['state'] = 'normal'
+            self.next_page_button['state'] = 'normal'
+
+        print 'Prev page button pressed'
+
 
     def list_items(self):
         for item in self.list_of_items:
@@ -376,7 +446,7 @@ class SteamScraperApp:
 
             self.price_label = Tkinter.Label(self.root, text=text_to_display)
             # Write the price label onto the grid
-            self.price_label.grid(row=self.row_counter, column=self.label_column)
+            # self.price_label.grid(row=self.row_counter, column=self.label_column)
             self.price_label_arr.append(self.price_label)
 
             # Display the image -------------------------------------------------------------------------
@@ -400,17 +470,21 @@ class SteamScraperApp:
             photo = PIL.ImageTk.PhotoImage(img)
             # Draw the image onto the grid
             img_label = Tkinter.Label(self.root, image=photo)
-            img_label.grid(row=self.row_counter, column=self.picture_column)
-            # img_label.grid_forget()
+            # img_label.grid(row=self.row_counter, column=self.picture_column)
             self.photo_arr.append(photo)
             self.img_label_arr.append(img_label)
 
-            # Increment row for formatting purposes
+        print 'img_label_arr length = ' + str(len(self.img_label_arr))
+        self.max_page_number = math.ceil(len(self.img_label_arr)/self.results_per_page) - 1
+        print 'maxPagenumber = ' + str(self.max_page_number)
+
+        # Draw window ------------------------
+        arr_s = self.current_page_number * 2
+        while(arr_s <= self.current_page_number*2+1):
+            self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
+            arr_s += 1
             self.row_counter += 1
-            if(self.row_counter % 3 == 0):
-                self.label_column += 3
-                self.picture_column += 3
-                self.row_counter = 0
+        self.row_counter = 0
 
         refresh_button = Tkinter.Button(self.root, text="Refresh", command=self.refresh)
         refresh_button.place(x=0, y=0)
@@ -421,10 +495,15 @@ class SteamScraperApp:
         profile_button.place(x=350, y=0)
         add__to_button = Tkinter.Button(self.root, text="Add Item to List", command=self.open_item_adder)
         add__to_button.place(x=250, y=0)
-        calc_button    = Tkinter.Button(self.root, text="Calculator", command=self.open_calculator)
+        calc_button = Tkinter.Button(self.root, text="Calculator", command=self.open_calculator)
         calc_button.place(x=170, y=0)
         service_stat_button = Tkinter.Button(self.root, text="Steam Service Stat", command=self.open_steam_status)
         service_stat_button.place(x=50, y=0)
+        self.next_page_button = Tkinter.Button(self.root, text="Next Page", state='normal', command=self.NextPage)
+        self.next_page_button.place(x=70, y=25)
+        self.prev_page_button = Tkinter.Button(self.root, text="Prev Page", state='disabled', command=self.PrevPage)
+        self.prev_page_button.place(x=0, y=25)
+        # Draw window -------------------------
 
         # root checker
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
