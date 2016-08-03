@@ -291,7 +291,7 @@ class SteamScraperApp:
         self.column_counter = 0
 
         # New display mechanics
-        self.results_per_page = 2
+        self.results_per_page = 2.0
         self.current_page__img_arr = []
         self.current_page__lbl_arr = []
         self.current_page_number = 0
@@ -343,26 +343,32 @@ class SteamScraperApp:
         ScanForLinkErrors('market_buy.txt')
 
     def DisplayPage(self):
-        pass
+        arr_s = self.current_page_number * 2
+        while (arr_s <= self.current_page_number * 2 + 1):
+            try:
+                self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
+            except IndexError:
+                break
+            arr_s += 1
+            self.row_counter += 1
+        self.row_counter = 0
+
+    def ForgetPage(self):
+        arr_s = self.current_page_number * 2
+        while (arr_s <= self.current_page_number * 2 + 1):
+            self.img_label_arr[arr_s].grid_forget()
+            arr_s += 1
 
 
     def NextPage(self):
         # Forget the grid in the current page
-        arr_s = self.current_page_number * 2
-        while(arr_s <= self.current_page_number * 2 + 1):
-            self.img_label_arr[arr_s].grid_forget()
-            arr_s += 1
+        self.ForgetPage()
         #Move over to the new page
         if(self.current_page_number < self.max_page_number):
             self.current_page_number+=1     #Increment
         print 'Current_page_number = ' + str(self.current_page_number)
         # Re-list new pages
-        arr_s = self.current_page_number * 2
-        while (arr_s <= self.current_page_number * 2 + 1):
-            self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
-            arr_s += 1
-            self.row_counter += 1
-        self.row_counter = 0
+        self.DisplayPage()
 
         # Enable and Disable Buttons
         if (self.current_page_number == self.max_page_number):
@@ -377,21 +383,13 @@ class SteamScraperApp:
 
     def PrevPage(self):
         # Forget the grid in the current page
-        arr_s = self.current_page_number * 2
-        while (arr_s <= self.current_page_number * 2 + 1):
-            self.img_label_arr[arr_s].grid_forget()
-            arr_s += 1
+        self.ForgetPage()
         # Move over to the new page
         if(self.current_page_number > 0):
             self.current_page_number-=1     #Decrement
         print 'Current_page_number = ' + str(self.current_page_number)
         #Re-list new pages
-        arr_s = self.current_page_number * 2
-        while (arr_s <= self.current_page_number * 2 + 1):
-            self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
-            arr_s += 1
-            self.row_counter += 1
-        self.row_counter = 0
+        self.DisplayPage()
         # Enable and Disable Buttons
         if(self.current_page_number == 0):
             self.prev_page_button['state'] = 'disabled'
@@ -424,7 +422,7 @@ class SteamScraperApp:
                 # print("RequestURL:" + request_url)
                 page.raise_for_status()
             except requests.HTTPError:
-                print("Unable to make request for item" + item.name)
+                print("Unable to make JSON request for item" + item.name)
                 continue
 
             json_dict = page.json()
@@ -463,28 +461,23 @@ class SteamScraperApp:
                 print(item.url)
                 continue
 
-            # Display the image
+            # Convert and Resize image
             r = requests.get(img_url[0])
             img = PIL.Image.open(BytesIO(r.content))
             img = img.resize((150, 150), PIL.Image.ANTIALIAS)
             photo = PIL.ImageTk.PhotoImage(img)
-            # Draw the image onto the grid
+            # Reference the image and photo
             img_label = Tkinter.Label(self.root, image=photo)
-            # img_label.grid(row=self.row_counter, column=self.picture_column)
+
             self.photo_arr.append(photo)
             self.img_label_arr.append(img_label)
 
-        print 'img_label_arr length = ' + str(len(self.img_label_arr))
-        self.max_page_number = math.ceil(len(self.img_label_arr)/self.results_per_page) - 1
+        print 'img_label_arr length = ' + str(float(len(self.img_label_arr)))
+        self.max_page_number = math.ceil(float(len(self.img_label_arr))/self.results_per_page) - 1.0
         print 'maxPagenumber = ' + str(self.max_page_number)
 
         # Draw window ------------------------
-        arr_s = self.current_page_number * 2
-        while(arr_s <= self.current_page_number*2+1):
-            self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
-            arr_s += 1
-            self.row_counter += 1
-        self.row_counter = 0
+        self.DisplayPage()
 
         refresh_button = Tkinter.Button(self.root, text="Refresh", command=self.refresh)
         refresh_button.place(x=0, y=0)
@@ -543,7 +536,7 @@ def CheckPrices_Sell(time_s):
             # print("RequestURL:" + request_url)
             page.raise_for_status()
         except requests.HTTPError:
-            print("Unable to make request for item" + item.name)
+            print("CheckPrices_Sell -- Unable to make JSON request for item" + item.name)
             continue
         json_dict = page.json()
         try:
