@@ -10,6 +10,7 @@ import csv
 import json
 import threading
 import math
+#
 TRAY_TOOLTIP = 'System Tray Demo'
 TRAY_ICON = 'icon.png'
 
@@ -19,10 +20,137 @@ base_profile_URL = ('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v
 steamTax = 1.15
 # baseURL string. DO NOT MODIFY
 baseURL = 'http://steamcommunity.com/market/priceoverview/?currency=13&appid=730&market_hash_name='
-items_sell = [] # market_store
-items_buy = []  # market_buy
+items_sell = []  # market_store
+items_buy = []   # market_buy
 root = None
 check_thread = None
+
+# Settings file
+settings_json = None
+
+#####################################################################
+# Allows program to open up individual windows without creating a root item first.
+
+def Check_For_Root_Ownership(root_param):
+    global root
+    if root_param == root and root != None:
+        root = None
+        print 'root is freed by ' + str(root_param)
+def Create_Menu_Item(menu, label, func):
+    item = wx.MenuItem(menu, -1, label)
+    menu.Bind(wx.EVT_MENU, func, id=item.GetId())
+    menu.AppendItem(item)
+    return item
+# Function that will check prices every time_s seconds and display a notification when items are ready to sell
+def Check_Prices_Sell(time_s):
+    global check_thread
+    check_thread = threading.Timer(time_s, Check_Prices_Sell)
+    check_thread.start()
+
+    possible_sell_itmes = []
+    for item in items_sell:
+        fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
+        # Split the url using '/' as the delimiter
+        hash_name = item.url.split('/')
+        # Generate the json URL for the item/weapon. Something along the lines of
+        # http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=StatTrak%E2%84%A2%20P250%20%7C%20Steel%20Disruption%20%28Factory%20New%29
+        request_url = baseURL + hash_name[-1]
+        # Create json
+        try:
+            page = requests.get(request_url)
+            # print("RequestURL:" + request_url)
+            page.raise_for_status()
+        except requests.HTTPError:
+            print("CheckPrices_Sell -- Unable to make JSON request for item" + item.name)
+            continue
+        json_dict = page.json()
+        try:
+            if item.purchase_price!=0.0 and json_dict[u'lowest_price'] >= fifteen_cent:
+                possible_sell_itmes.append(item.name)
+        except KeyError:
+            continue
+    if possible_sell_itmes:
+        msg = wx.NotificationMessage()
+        msg.SetTitle('Items to sell')
+        msg.SetMessage(str(possible_sell_itmes))
+        msg.Show()
+# Makes sure that the links in file_name are valid
+def Scan_For_Link_Errors(file_name):
+    error_flag = False
+    correct_lines = []
+    print 'Starting link error scan'
+    infile = open(file_name,'r')
+    infile_readlines = infile.readlines()
+    for row in infile_readlines:
+        # print row
+        if 'http://steamcommunity.com/market' in row:
+            correct_lines.append(row)
+        else:
+            error_flag = True
+    infile.close()
+
+    open(file_name, 'w').close()
+
+    outfile = open(file_name,'w')
+    for item in correct_lines:
+        outfile.write(item)
+    outfile.close()
+
+    print 'Scan complete'
+    if error_flag == True:
+        print 'Errors found and fixed'
+# Load settings to prevent opening settings.txt over and over again
+def Read_Settings():
+    global settings_json
+    with open('settings.txt') as settings:
+        settings_json = json.load(settings)
+        settings.close()
+
+def Write_Settings():
+    global settings_json
+    with open('settings.txt','w') as settings:
+        json.dump(settings_json,settings)
+
+class SettingsWindow:
+    def __init__(self):
+        global root
+        if (root == None):
+            root = Tkinter.Tk()
+            self.root = root
+            print 'root is taken by' + str(self)
+        else:
+            self.root = Tkinter.Toplevel()
+        self.root.title('Settings')
+        # Notifications
+        self.notification_arg = Tkinter.IntVar()
+        self.notification_entry = Tkinter.Entry(self.root, textvariable=self.notification_arg).grid(row=1,column=3)
+        self.notification_label = Tkinter.Label(self.root,text='Notification').grid(row=1,column=2)
+        # Results Per Page
+        self.resultsPerPage_arg = Tkinter.IntVar()
+        self.resultsPerPage_entry= Tkinter.Entry(self.root, textvariable=self.resultsPerPage_arg).grid(row=2, column=3)
+        self.resultsPerPage_label = Tkinter.Label(self.root, text='Results Per Page').grid(row=2, column=2)
+        # Interval Time
+        self.checkTime_arg = Tkinter.IntVar()
+        self.checkTime_entry = Tkinter.Entry(self.root, textvariable=self.checkTime_arg).grid(row=3, column=3)
+        self.checkTime_label = Tkinter.Label(self.root, text='Notification Intervale (s)').grid(row=3, column=2)
+
+        # Save Button
+        self.save_button = Tkinter.Button(self.root, text="Save", command=self.SaveSettings).grid(row=4, column=4)
+        #
+        self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
+        self.root.mainloop()
+
+    def root_owner_caller(self):
+        Check_For_Root_Ownership(self.root)
+        self.root.destroy()
+
+    def SaveSettings(self):
+        global settings_json
+        settings_json['notifications'] = self.notification_arg.get()
+        settings_json['maxresultsperpage'] = self.resultsPerPage_arg.get()
+        settings_json['checktime'] = self.checkTime_arg.get()
+        Write_Settings()
+        print 'Settings Saved'
 
 
 class ProfileSearch:
@@ -65,9 +193,8 @@ class ProfileSearch:
             print('Profile URL Not Found')
 
     def root_owner_caller(self):
-        checkForRootOwnership(self.root)
+        Check_For_Root_Ownership(self.root)
         self.root.destroy()
-
 class ProfileDisplay:
     def __init__(self, page):
         self.root = Tkinter.Toplevel()
@@ -223,7 +350,7 @@ class AddItem:
         self.root.destroy()
 
     def root_owner_caller(self):
-        checkForRootOwnership(self.root)
+        Check_For_Root_Ownership(self.root)
         self.root.destroy()
 class Calculator:
     def __init__(self):
@@ -254,7 +381,6 @@ class Calculator:
         self.price_output15_label = Tkinter.Label(self.root, text='15c Profit').pack()
         self.price_output15_entry = Tkinter.Entry(self.root, textvariable=self.price_15result, state='readonly').pack()
 
-        # Display info
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
@@ -266,13 +392,13 @@ class Calculator:
         self.price_15result.set(fifteen_cent_profit)
 
     def root_owner_caller(self):
-        checkForRootOwnership(self.root)
+        Check_For_Root_Ownership(self.root)
         self.root.destroy()
 
     # Takes in a list of Weapon objects.
 class SteamScraperApp:
     def __init__(self, list_of_items_p):
-        # self.root = None
+        global settings_json
         global root
         if (root == None):
             root = Tkinter.Tk()
@@ -291,7 +417,8 @@ class SteamScraperApp:
         self.column_counter = 0
 
         # New display mechanics
-        self.results_per_page = 2.0
+        self.results_per_page = settings_json['maxresultsperpage']
+        print 'resultsperpage = ' + str(self.results_per_page)
         self.current_page__img_arr = []
         self.current_page__lbl_arr = []
         self.current_page_number = 0
@@ -303,7 +430,6 @@ class SteamScraperApp:
         self.list_items()
 
     def refresh(self):
-
         for item in self.img_label_arr:
             item.grid_forget()
             self.img_label_arr.remove(item)
@@ -318,6 +444,9 @@ class SteamScraperApp:
         # self.column = 0
 
         self.list_items()
+
+    def open_settings(self):
+        SettingsWindow()
 
     # @staticmethod
     def open_profile(self):
@@ -335,29 +464,30 @@ class SteamScraperApp:
         webbrowser.open('https://steamstat.us/',new=2)
 
     def root_owner_caller(self):
-        checkForRootOwnership(self.root)
+        Check_For_Root_Ownership(self.root)
         self.root.destroy()
 
     def ScanForLinkErrorCaller(self):
-        ScanForLinkErrors('market_sell.txt')
-        ScanForLinkErrors('market_buy.txt')
+        Scan_For_Link_Errors('market_sell.txt')
+        Scan_For_Link_Errors('market_buy.txt')
 
     def DisplayPage(self):
-        arr_s = self.current_page_number * 2
-        while (arr_s <= self.current_page_number * 2 + 1):
+        arr_s = self.current_page_number * self.results_per_page
+        max_index = self.current_page_number * self.results_per_page + (self.results_per_page-1)
+        while arr_s <= max_index:
             try:
                 self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
-                self.price_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter +1)
+                self.price_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter + 1)
             except IndexError:
                 break
             arr_s += 1
             self.row_counter += 1
         self.row_counter = 0
 
-
     def ForgetPage(self):
-        arr_s = self.current_page_number * 2
-        while (arr_s <= self.current_page_number * 2 + 1):
+        arr_s = self.current_page_number * self.results_per_page
+        max_index = self.current_page_number * self.results_per_page + (self.results_per_page - 1)
+        while arr_s <= max_index:
             try:
                 self.img_label_arr[arr_s].grid_forget()
                 self.price_label_arr[arr_s].grid_forget()
@@ -365,39 +495,36 @@ class SteamScraperApp:
                 break
             arr_s += 1
 
-
     def NextPage(self):
         # Forget the grid in the current page
         self.ForgetPage()
-        #Move over to the new page
-        if(self.current_page_number < self.max_page_number):
-            self.current_page_number+=1     #Increment
+        # Move over to the new page
+        if self.current_page_number < self.max_page_number:
+            self.current_page_number +=1     # Increment
         print 'Current_page_number = ' + str(self.current_page_number)
         # Re-list new pages
         self.DisplayPage()
 
         # Enable and Disable Buttons
-        if (self.current_page_number == self.max_page_number):
+        if self.current_page_number == self.max_page_number:
             self.next_page_button['state'] = 'disabled'
             self.prev_page_button['state'] = 'normal'
         else:
             self.next_page_button['state'] = 'normal'
             self.prev_page_button['state'] = 'normal'
-
-
         print 'Next page button pressed'
 
     def PrevPage(self):
         # Forget the grid in the current page
         self.ForgetPage()
         # Move over to the new page
-        if(self.current_page_number > 0):
-            self.current_page_number-=1     #Decrement
+        if self.current_page_number > 0:
+            self.current_page_number-=1     # Decrement
         print 'Current_page_number = ' + str(self.current_page_number)
         #Re-list new pages
         self.DisplayPage()
         # Enable and Disable Buttons
-        if(self.current_page_number == 0):
+        if self.current_page_number == 0:
             self.prev_page_button['state'] = 'disabled'
             self.next_page_button['state'] = 'normal'
         else:
@@ -498,6 +625,9 @@ class SteamScraperApp:
         calc_button.place(x=170, y=0)
         service_stat_button = Tkinter.Button(self.root, text="Steam Service Stat", command=self.open_steam_status)
         service_stat_button.place(x=50, y=0)
+        settings_button = Tkinter.Button(self.root, text="Settings", command=self.open_settings)
+        settings_button.place(x=100, y=0)
+        #
         self.next_page_button = Tkinter.Button(self.root, text="Next Page", state='normal', command=self.NextPage)
         self.next_page_button.place(x=70, y=25)
         self.prev_page_button = Tkinter.Button(self.root, text="Prev Page", state='disabled', command=self.PrevPage)
@@ -508,79 +638,6 @@ class SteamScraperApp:
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
-#####################################################################
-# Allows program to open up individual windows without creating a root item first.
-def checkForRootOwnership(root_param):
-    global root
-    if root_param == root and root != None:
-        root = None
-        print 'root is freed by ' + str(root_param)
-
-def create_menu_item(menu, label, func):
-    item = wx.MenuItem(menu, -1, label)
-    menu.Bind(wx.EVT_MENU, func, id=item.GetId())
-    menu.AppendItem(item)
-    return item
-
-# Function that will check prices every time_s seconds and display a notification when items are ready to sell
-def CheckPrices_Sell(time_s):
-    global check_thread
-    check_thread = threading.Timer(time_s, CheckPrices_Sell)
-    check_thread.start()
-
-    possible_sell_itmes = []
-    for item in items_sell:
-        fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
-        # Split the url using '/' as the delimiter
-        hash_name = item.url.split('/')
-        # Generate the json URL for the item/weapon. Something along the lines of
-        # http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=StatTrak%E2%84%A2%20P250%20%7C%20Steel%20Disruption%20%28Factory%20New%29
-        request_url = baseURL + hash_name[-1]
-        # Create json
-        try:
-            page = requests.get(request_url)
-            # print("RequestURL:" + request_url)
-            page.raise_for_status()
-        except requests.HTTPError:
-            print("CheckPrices_Sell -- Unable to make JSON request for item" + item.name)
-            continue
-        json_dict = page.json()
-        try:
-            if item.purchase_price!=0.0 and json_dict[u'lowest_price'] >= fifteen_cent:
-                possible_sell_itmes.append(item.name)
-        except KeyError:
-            continue
-    if possible_sell_itmes:
-        msg = wx.NotificationMessage()
-        msg.SetTitle('Items to sell')
-        msg.SetMessage(str(possible_sell_itmes))
-        msg.Show()
-
-# Makes sure that the links in file_name are valid
-def ScanForLinkErrors(file_name):
-    error_flag = False
-    correct_lines = []
-    print 'Starting link error scan'
-    infile = open(file_name,'r')
-    infile_readlines = infile.readlines()
-    for row in infile_readlines:
-        # print row
-        if 'http://steamcommunity.com/market' in row:
-            correct_lines.append(row)
-        else:
-            error_flag = True
-    infile.close()
-
-    open(file_name, 'w').close()
-
-    outfile = open(file_name,'w')
-    for item in correct_lines:
-        outfile.write(item)
-    outfile.close()
-
-    print 'Scan complete'
-    if error_flag == True:
-        print 'Errors found and fixed'
 
 ####################################################################
 class TaskBarIcon(wx.TaskBarIcon):
@@ -592,12 +649,12 @@ class TaskBarIcon(wx.TaskBarIcon):
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
-        create_menu_item(menu, 'Open', self.OpenApp)
-        create_menu_item(menu, 'Calculator', self.OpenCalculator)
-        create_menu_item(menu, 'Add Item to List', self.OpenAddItem)
-        create_menu_item(menu, 'Profile Viewer',self.OpenProfileViewer)
+        Create_Menu_Item(menu, 'Open', self.OpenApp)
+        Create_Menu_Item(menu, 'Calculator', self.OpenCalculator)
+        Create_Menu_Item(menu, 'Add Item to List', self.OpenAddItem)
+        Create_Menu_Item(menu, 'Profile Viewer', self.OpenProfileViewer)
         menu.AppendSeparator()
-        create_menu_item(menu, 'Exit', self.on_exit)
+        Create_Menu_Item(menu, 'Exit', self.on_exit)
         return menu
 
     def set_icon(self, path):
@@ -626,6 +683,7 @@ class TaskBarIcon(wx.TaskBarIcon):
     def OpenProfileViewer(self,event):
         ProfileSearch()
 
+
 class App(wx.App):
     def OnInit(self):
         frame = wx.Frame(None)
@@ -635,13 +693,10 @@ class App(wx.App):
 
 ######################################################################
 def main():
-    ScanForLinkErrors('market_sell.txt')
-    ScanForLinkErrors('market_buy.txt')
+    Scan_For_Link_Errors('market_sell.txt')
+    Scan_For_Link_Errors('market_buy.txt')
 
-    with open('settings.json') as settings:
-        settings_json = json.load(settings)
-        settings.close()
-    # print settings_json["notifications"]
+    Read_Settings()
 
     app = App(False)
     with open('market_sell.txt') as csv_file:
@@ -658,9 +713,10 @@ def main():
             items_buy.append(Weapon(row[0], row[1], row[2]))
 
     if settings_json["notifications"] == 1:
-        CheckPrices_Sell(settings_json["checktime"])
+        Check_Prices_Sell(settings_json["checktime"])
 
     app.MainLoop()
+
 
 if __name__ == '__main__':
     print 'Compile Complete'

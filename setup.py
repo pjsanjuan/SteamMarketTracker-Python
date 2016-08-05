@@ -11,7 +11,7 @@ cx_Freeze.setup(
     {
         'build_exe': {
             'packages':['Tkinter','lxml.etree','lxml','gzip'],
-            'include_files':['icon.png','market_sell.txt','market_buy.txt','settings.json'],
+            'include_files':['icon.png','market_sell.txt','market_buy.txt','settings.txt'],
             'excludes': ['collections.abc']
         }
     },
