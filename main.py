@@ -28,6 +28,8 @@ check_thread = None
 # Settings file
 settings_json = None
 
+#arrays
+
 #####################################################################
 # Allows program to open up individual windows without creating a root item first.
 
@@ -435,17 +437,23 @@ class SteamScraperApp:
         self.items_frame = Tkinter.Frame(self.root,height=2, bd=1, relief='sunken')
         self.items_frame.pack()
         # Re-list items
-        self.list_items()
+        self.first_time_open()
 
     def refresh(self):
         print 'refresh called'
+        print 'beginning destruction of widgets'
         # Destroy the widgets
-        self.ForgetPage()
-        for item in self.img_label_arr:
-            item.destroy()
-        for item in self.price_label_arr:
-            item.destroy()
+        # self.ForgetPage()
+        print 'Deleting' + str(len(self.img_label_arr)) + 'items from img_label_arr'
 
+        for item in self.img_label_arr:
+            print 'Destorying item' + str(item) + 'from img_label_arr'
+            item.destroy()
+        print 'Done destorying items in img_label_arr'
+        for item in self.price_label_arr:
+            print 'Destroying item' + str(item) + 'from price_label_arr'
+            item.destroy()
+        print 'Done destorying items in price_label_arr'
         self.img_label_arr = []
         self.price_label_arr = []
 
@@ -453,10 +461,10 @@ class SteamScraperApp:
         # print 'refresh() img_label_arry length = ' + str(len(self.img_label_arr))
         # self.price_label_arr = []
         #
-        # self.list_items()
+        self.get_data()
         # self.ForgetPage()
-        # self.current_page_number = 0
-        # self.DisplayPage()
+        self.current_page_number = 0
+        self.DisplayPage()
 
     def open_settings(self):
         SettingsWindow()
@@ -491,7 +499,7 @@ class SteamScraperApp:
             try:
                 self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
                 self.price_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter + 1)
-            except IndexError:
+            except IndexError, Tkinter.TclError:
                 break
             arr_s += 1
             self.row_counter += 1
@@ -547,8 +555,14 @@ class SteamScraperApp:
 
         print 'Prev page button pressed'
 
+
+    def first_time_open(self):
+        print 'first_time_open called'
+        self.get_data()
+        self.DrawMainWindow()
     # Fetches data, creates Tkinter Labels, then stores it into img_label_arr and price_label_arr
-    def list_items(self):
+    def get_data(self):
+        print 'list_items called'
         for item in self.list_of_items:
             # Print the text Information ------------------------------------------------------------
             # Prices for profit
@@ -576,7 +590,7 @@ class SteamScraperApp:
             json_dict = page.json()
             try:
                 text_to_display = (
-                    "\n\nName: " + item.name + '\n' +
+                    "Name: " + item.name + '\n' +
                     "Purchase Price: " + item.purchase_price + '\n' +
                     "Median Price: " + json_dict[u'median_price'] + '\n' +
                     "Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
@@ -589,11 +603,12 @@ class SteamScraperApp:
                 )
             except KeyError:
                 text_to_display = 'Key error. Please refresh in a few minutes.'
+                continue
 
             price_label = Tkinter.Label(self.items_frame, text=text_to_display)
             # Write the price label onto the grid
             # self.price_label.grid(row=self.row_counter, column=self.label_column)
-            self.price_label_arr.append(price_label)
+
 
             # Display the image -------------------------------------------------------------------------
             # Get img_url
@@ -604,47 +619,54 @@ class SteamScraperApp:
             img_url = tree.xpath('//*[@id="mainContents"]/div[2]/div/div[1]/img/@src')
             try:
                 self.temp = img_url[0]
+                # Convert and Resize image
+                r = requests.get(img_url[0])
+                img = PIL.Image.open(BytesIO(r.content))
+                img = img.resize((150, 150), PIL.Image.ANTIALIAS)
+                photo = PIL.ImageTk.PhotoImage(img)
+                # Reference the image and photo
+                img_label = Tkinter.Label(self.items_frame, image=photo)
+                # append to arrays. Append all 3 only when they are all valid
+                self.photo_arr.append(photo)
+                self.img_label_arr.append(img_label)
+                self.price_label_arr.append(price_label)
             except IndexError:
-                print("img_url[0] == None:")
+                print "img_url[0] == None:"
                 print(item.url)
                 continue
 
-            # Convert and Resize image
-            r = requests.get(img_url[0])
-            img = PIL.Image.open(BytesIO(r.content))
-            img = img.resize((150, 150), PIL.Image.ANTIALIAS)
-            photo = PIL.ImageTk.PhotoImage(img)
-            # Reference the image and photo
-            img_label = Tkinter.Label(self.items_frame, image=photo)
-
-            self.photo_arr.append(photo)
-            self.img_label_arr.append(img_label)
-
+        # Debug info
         print 'img_label_arr length = ' + str(float(len(self.img_label_arr)))
         self.max_page_number = math.ceil(float(len(self.img_label_arr))/self.results_per_page) - 1.0
         print 'maxPagenumber = ' + str(self.max_page_number)
 
+    def DrawMainWindow(self):
+        print 'DrawWindow called'
         # Draw window ------------------------
         refresh_button = Tkinter.Button(self.buttons_frame, text="Refresh", command=self.refresh)
-        refresh_button.grid(row=0,column=0,stick='nw')
-        error_checking_button = Tkinter.Button(self.buttons_frame, text='Error Check', command=self.ScanForLinkErrorCaller)
-        error_checking_button.grid(row=0,column=1,stick='nw')
+        refresh_button.grid(row=0, column=0, stick='nw')
+        error_checking_button = Tkinter.Button(self.buttons_frame, text='Error Check',
+                                               command=self.ScanForLinkErrorCaller)
+        error_checking_button.grid(row=0, column=1, stick='nw')
         # Other features of application
         profile_button = Tkinter.Button(self.buttons_frame, text="Profile", command=self.open_profile)
-        profile_button.grid(row=0,column=2,stick='nw')
+        profile_button.grid(row=0, column=2, stick='nw')
         add__to_button = Tkinter.Button(self.buttons_frame, text="Add Item to List", command=self.open_item_adder)
-        add__to_button.grid(row=0,column=3,stick='nw')
+        add__to_button.grid(row=0, column=3, stick='nw')
         calc_button = Tkinter.Button(self.buttons_frame, text="Calculator", command=self.open_calculator)
-        calc_button.grid(row=0,column=4,stick='nw')
-        service_stat_button = Tkinter.Button(self.buttons_frame, text="Steam Service Stat", command=self.open_steam_status)
-        service_stat_button.grid(row=0,column=5,stick='nw')
+        calc_button.grid(row=0, column=4, stick='nw')
+        service_stat_button = Tkinter.Button(self.buttons_frame, text="Steam Service Stat",
+                                             command=self.open_steam_status)
+        service_stat_button.grid(row=0, column=5, stick='nw')
         settings_button = Tkinter.Button(self.buttons_frame, text="Settings", command=self.open_settings)
-        settings_button.grid(row=0,column=6,stick='nw')
+        settings_button.grid(row=0, column=6, stick='nw')
         #
-        self.next_page_button = Tkinter.Button(self.buttons_frame, text="Next Page", state='normal',command=self.NextPage)
-        self.next_page_button.grid(row=1,column=1,stick='nw')
-        self.prev_page_button = Tkinter.Button(self.buttons_frame, text="Prev Page", state='disabled',command=self.PrevPage)
-        self.prev_page_button.grid(row=1,column=0,stick='nw')
+        self.next_page_button = Tkinter.Button(self.buttons_frame, text="Next Page", state='normal',
+                                               command=self.NextPage)
+        self.next_page_button.grid(row=1, column=1, stick='nw')
+        self.prev_page_button = Tkinter.Button(self.buttons_frame, text="Prev Page", state='disabled',
+                                               command=self.PrevPage)
+        self.prev_page_button.grid(row=1, column=0, stick='nw')
         # Draw window -------------------------
         self.DisplayPage()
         print 'Done fetching data'
@@ -652,7 +674,6 @@ class SteamScraperApp:
         print 'listItems() img_label_array length = ' + str(len(self.img_label_arr))
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
-
 
 ####################################################################
 class TaskBarIcon(wx.TaskBarIcon):
