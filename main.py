@@ -429,24 +429,34 @@ class SteamScraperApp:
         print 'Current_page_number = ' + str(self.current_page_number)
         self.max_page_number = 0
 
+        #Frames
+        self.buttons_frame = Tkinter.Frame(self.root,height=2, bd=1, relief='sunken')
+        self.buttons_frame.pack()
+        self.items_frame = Tkinter.Frame(self.root,height=2, bd=1, relief='sunken')
+        self.items_frame.pack()
         # Re-list items
         self.list_items()
 
     def refresh(self):
+        print 'refresh called'
+        # Destroy the widgets
+        self.ForgetPage()
         for item in self.img_label_arr:
-            item.grid_forget()
-            self.img_label_arr.remove(item)
-
+            item.destroy()
         for item in self.price_label_arr:
-            item.grid_forget()
-            self.price_label_arr.remove(item)
+            item.destroy()
 
-        # self.row_counter = 0
-        # self.label_column = 0
-        # self.picture_column = 2
-        # self.column = 0
+        self.img_label_arr = []
+        self.price_label_arr = []
 
-        self.list_items()
+        # self.img_label_arr = []
+        # print 'refresh() img_label_arry length = ' + str(len(self.img_label_arr))
+        # self.price_label_arr = []
+        #
+        # self.list_items()
+        # self.ForgetPage()
+        # self.current_page_number = 0
+        # self.DisplayPage()
 
     def open_settings(self):
         SettingsWindow()
@@ -497,6 +507,7 @@ class SteamScraperApp:
             except IndexError:
                 break
             arr_s += 1
+        self.row_counter = 0
 
     def NextPage(self):
         # Forget the grid in the current page
@@ -536,7 +547,7 @@ class SteamScraperApp:
 
         print 'Prev page button pressed'
 
-
+    # Fetches data, creates Tkinter Labels, then stores it into img_label_arr and price_label_arr
     def list_items(self):
         for item in self.list_of_items:
             # Print the text Information ------------------------------------------------------------
@@ -554,6 +565,7 @@ class SteamScraperApp:
             request_url = baseURL + hash_name[-1]
             # Create json
             try:
+                print 'Requesting JSON from: ' + request_url
                 page = requests.get(request_url)
                 # print("RequestURL:" + request_url)
                 page.raise_for_status()
@@ -578,10 +590,10 @@ class SteamScraperApp:
             except KeyError:
                 text_to_display = 'Key error. Please refresh in a few minutes.'
 
-            self.price_label = Tkinter.Label(self.root, text=text_to_display)
+            price_label = Tkinter.Label(self.items_frame, text=text_to_display)
             # Write the price label onto the grid
             # self.price_label.grid(row=self.row_counter, column=self.label_column)
-            self.price_label_arr.append(self.price_label)
+            self.price_label_arr.append(price_label)
 
             # Display the image -------------------------------------------------------------------------
             # Get img_url
@@ -603,7 +615,7 @@ class SteamScraperApp:
             img = img.resize((150, 150), PIL.Image.ANTIALIAS)
             photo = PIL.ImageTk.PhotoImage(img)
             # Reference the image and photo
-            img_label = Tkinter.Label(self.root, image=photo)
+            img_label = Tkinter.Label(self.items_frame, image=photo)
 
             self.photo_arr.append(photo)
             self.img_label_arr.append(img_label)
@@ -613,31 +625,31 @@ class SteamScraperApp:
         print 'maxPagenumber = ' + str(self.max_page_number)
 
         # Draw window ------------------------
-        self.DisplayPage()
-
-        refresh_button = Tkinter.Button(self.root, text="Refresh", command=self.refresh)
-        refresh_button.place(x=0, y=0)
-        error_checking_button = Tkinter.Button(self.root, text='Error Check', command=self.ScanForLinkErrorCaller)
-        error_checking_button.place(x=500, y=0)
+        refresh_button = Tkinter.Button(self.buttons_frame, text="Refresh", command=self.refresh)
+        refresh_button.grid(row=0,column=0,stick='nw')
+        error_checking_button = Tkinter.Button(self.buttons_frame, text='Error Check', command=self.ScanForLinkErrorCaller)
+        error_checking_button.grid(row=0,column=1,stick='nw')
         # Other features of application
-        profile_button = Tkinter.Button(self.root, text="Profile", command=self.open_profile)
-        profile_button.place(x=350, y=0)
-        add__to_button = Tkinter.Button(self.root, text="Add Item to List", command=self.open_item_adder)
-        add__to_button.place(x=250, y=0)
-        calc_button = Tkinter.Button(self.root, text="Calculator", command=self.open_calculator)
-        calc_button.place(x=170, y=0)
-        service_stat_button = Tkinter.Button(self.root, text="Steam Service Stat", command=self.open_steam_status)
-        service_stat_button.place(x=50, y=0)
-        settings_button = Tkinter.Button(self.root, text="Settings", command=self.open_settings)
-        settings_button.place(x=100, y=0)
+        profile_button = Tkinter.Button(self.buttons_frame, text="Profile", command=self.open_profile)
+        profile_button.grid(row=0,column=2,stick='nw')
+        add__to_button = Tkinter.Button(self.buttons_frame, text="Add Item to List", command=self.open_item_adder)
+        add__to_button.grid(row=0,column=3,stick='nw')
+        calc_button = Tkinter.Button(self.buttons_frame, text="Calculator", command=self.open_calculator)
+        calc_button.grid(row=0,column=4,stick='nw')
+        service_stat_button = Tkinter.Button(self.buttons_frame, text="Steam Service Stat", command=self.open_steam_status)
+        service_stat_button.grid(row=0,column=5,stick='nw')
+        settings_button = Tkinter.Button(self.buttons_frame, text="Settings", command=self.open_settings)
+        settings_button.grid(row=0,column=6,stick='nw')
         #
-        self.next_page_button = Tkinter.Button(self.root, text="Next Page", state='normal', command=self.NextPage)
-        self.next_page_button.place(x=70, y=25)
-        self.prev_page_button = Tkinter.Button(self.root, text="Prev Page", state='disabled', command=self.PrevPage)
-        self.prev_page_button.place(x=0, y=25)
+        self.next_page_button = Tkinter.Button(self.buttons_frame, text="Next Page", state='normal',command=self.NextPage)
+        self.next_page_button.grid(row=1,column=1,stick='nw')
+        self.prev_page_button = Tkinter.Button(self.buttons_frame, text="Prev Page", state='disabled',command=self.PrevPage)
+        self.prev_page_button.grid(row=1,column=0,stick='nw')
         # Draw window -------------------------
-
+        self.DisplayPage()
+        print 'Done fetching data'
         # root checker
+        print 'listItems() img_label_array length = ' + str(len(self.img_label_arr))
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
@@ -717,6 +729,8 @@ def main():
 
     if settings_json["notifications"] == 1:
         Check_Prices_Sell(settings_json["checktime"])
+
+    SteamScraperApp(items_sell)
 
     app.MainLoop()
 
