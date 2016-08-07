@@ -123,14 +123,17 @@ class SettingsWindow:
         self.root.title('Settings')
         # Notifications
         self.notification_arg = Tkinter.IntVar()
+        self.notification_arg.set(settings_json['notifications'])
         self.notification_entry = Tkinter.Entry(self.root, textvariable=self.notification_arg).grid(row=1,column=3)
         self.notification_label = Tkinter.Label(self.root,text='Notification').grid(row=1,column=2)
         # Results Per Page
         self.resultsPerPage_arg = Tkinter.IntVar()
+        self.resultsPerPage_arg.set(settings_json['maxresultsperpage'])
         self.resultsPerPage_entry= Tkinter.Entry(self.root, textvariable=self.resultsPerPage_arg).grid(row=2, column=3)
         self.resultsPerPage_label = Tkinter.Label(self.root, text='Results Per Page').grid(row=2, column=2)
         # Interval Time
         self.checkTime_arg = Tkinter.IntVar()
+        self.checkTime_arg.set(settings_json['checktime'])
         self.checkTime_entry = Tkinter.Entry(self.root, textvariable=self.checkTime_arg).grid(row=3, column=3)
         self.checkTime_label = Tkinter.Label(self.root, text='Notification Intervale (s)').grid(row=3, column=2)
 
