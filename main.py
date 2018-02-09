@@ -3,7 +3,7 @@ from lxml import html
 import requests
 import PIL.Image
 import PIL.ImageTk
-import Tkinter
+import tkinter
 from io import BytesIO
 import webbrowser
 import csv
@@ -37,7 +37,7 @@ def Check_For_Root_Ownership(root_param):
     global root
     if root_param == root and root != None:
         root = None
-        print 'root is freed by ' + str(root_param)
+        print('root is freed by ' + str(root_param))
 def Create_Menu_Item(menu, label, func):
     item = wx.MenuItem(menu, -1, label)
     menu.Bind(wx.EVT_MENU, func, id=item.GetId())
@@ -63,11 +63,11 @@ def Check_Prices_Sell(time_s):
             # print("RequestURL:" + request_url)
             page.raise_for_status()
         except requests.HTTPError:
-            print("CheckPrices_Sell -- Unable to make JSON request for item" + item.name)
+            print(("CheckPrices_Sell -- Unable to make JSON request for item" + item.name))
             continue
         json_dict = page.json()
         try:
-            if item.purchase_price!=0.0 and json_dict[u'lowest_price'] >= fifteen_cent:
+            if item.purchase_price!=0.0 and json_dict['lowest_price'] >= fifteen_cent:
                 possible_sell_itmes.append(item.name)
         except KeyError:
             continue
@@ -80,7 +80,7 @@ def Check_Prices_Sell(time_s):
 def Scan_For_Link_Errors(file_name):
     error_flag = False
     correct_lines = []
-    print 'Starting link error scan'
+    print('Starting link error scan')
     infile = open(file_name,'r')
     infile_readlines = infile.readlines()
     for row in infile_readlines:
@@ -98,9 +98,9 @@ def Scan_For_Link_Errors(file_name):
         outfile.write(item)
     outfile.close()
 
-    print 'Scan complete'
+    print('Scan complete')
     if error_flag == True:
-        print 'Errors found and fixed'
+        print('Errors found and fixed')
 # Load settings to prevent opening settings.txt over and over again
 def Read_Settings():
     global settings_json
@@ -117,30 +117,30 @@ class SettingsWindow:
     def __init__(self):
         global root
         if (root == None):
-            root = Tkinter.Tk()
+            root = tkinter.Tk()
             self.root = root
-            print 'root is taken by' + str(self)
+            print('root is taken by' + str(self))
         else:
-            self.root = Tkinter.Toplevel()
+            self.root = tkinter.Toplevel()
         self.root.title('Settings')
         # Notifications
-        self.notification_arg = Tkinter.IntVar()
+        self.notification_arg = tkinter.IntVar()
         self.notification_arg.set(settings_json['notifications'])
-        self.notification_entry = Tkinter.Entry(self.root, textvariable=self.notification_arg).grid(row=1,column=3)
-        self.notification_label = Tkinter.Label(self.root,text='Notification').grid(row=1,column=2)
+        self.notification_entry = tkinter.Entry(self.root, textvariable=self.notification_arg).grid(row=1,column=3)
+        self.notification_label = tkinter.Label(self.root,text='Notification').grid(row=1,column=2)
         # Results Per Page
-        self.resultsPerPage_arg = Tkinter.IntVar()
+        self.resultsPerPage_arg = tkinter.IntVar()
         self.resultsPerPage_arg.set(settings_json['maxresultsperpage'])
-        self.resultsPerPage_entry= Tkinter.Entry(self.root, textvariable=self.resultsPerPage_arg).grid(row=2, column=3)
-        self.resultsPerPage_label = Tkinter.Label(self.root, text='Results Per Page').grid(row=2, column=2)
+        self.resultsPerPage_entry= tkinter.Entry(self.root, textvariable=self.resultsPerPage_arg).grid(row=2, column=3)
+        self.resultsPerPage_label = tkinter.Label(self.root, text='Results Per Page').grid(row=2, column=2)
         # Interval Time
-        self.checkTime_arg = Tkinter.IntVar()
+        self.checkTime_arg = tkinter.IntVar()
         self.checkTime_arg.set(settings_json['checktime'])
-        self.checkTime_entry = Tkinter.Entry(self.root, textvariable=self.checkTime_arg).grid(row=3, column=3)
-        self.checkTime_label = Tkinter.Label(self.root, text='Notification Intervale (s)').grid(row=3, column=2)
+        self.checkTime_entry = tkinter.Entry(self.root, textvariable=self.checkTime_arg).grid(row=3, column=3)
+        self.checkTime_label = tkinter.Label(self.root, text='Notification Intervale (s)').grid(row=3, column=2)
 
         # Save Button
-        self.save_button = Tkinter.Button(self.root, text="Save", command=self.SaveSettings).grid(row=4, column=4)
+        self.save_button = tkinter.Button(self.root, text="Save", command=self.SaveSettings).grid(row=4, column=4)
         #
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
@@ -155,34 +155,34 @@ class SettingsWindow:
         settings_json['maxresultsperpage'] = self.resultsPerPage_arg.get()
         settings_json['checktime'] = self.checkTime_arg.get()
         Write_Settings()
-        print 'Settings Saved'
+        print('Settings Saved')
 class ProfileSearch:
     def __init__(self):
         global root
         if (root == None):
-            root = Tkinter.Tk()
+            root = tkinter.Tk()
             self.root = root
-            print 'root is taken by' + str(self)
+            print('root is taken by' + str(self))
         else:
-            self.root = Tkinter.Toplevel()
+            self.root = tkinter.Toplevel()
         self.root.title('Profile Viewer')
         # self.search_param = Tkinter.StringVar()
-        self.profile_arg = Tkinter.IntVar()
-        self.profile_button = Tkinter.Button(self.root, text="Enter 64bit Steam ID", command = self.GotoProfile).grid(row=0, column=0)
-        self.profile_entry = Tkinter.Entry(self.root, textvariable=self.profile_arg).grid(row=0, column=2)
+        self.profile_arg = tkinter.IntVar()
+        self.profile_button = tkinter.Button(self.root, text="Enter 64bit Steam ID", command = self.GotoProfile).grid(row=0, column=0)
+        self.profile_entry = tkinter.Entry(self.root, textvariable=self.profile_arg).grid(row=0, column=2)
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
     def GotoProfile(self):
         profile_id = str(self.profile_arg.get())
         if(len(profile_id) != 17):
-            top = Tkinter.Toplevel()
+            top = tkinter.Toplevel()
             top.title("Error")
 
-            msg = Tkinter.Message(top, text="Invalid Profile ID")
+            msg = tkinter.Message(top, text="Invalid Profile ID")
             msg.pack()
 
-            button = Tkinter.Button(top, text="Dismiss", command=top.destroy)
+            button = tkinter.Button(top, text="Dismiss", command=top.destroy)
             button.pack()
             return
         profile_URL = base_profile_URL + profile_id
@@ -200,18 +200,18 @@ class ProfileSearch:
         self.root.destroy()
 class ProfileDisplay:
     def __init__(self, page):
-        self.root = Tkinter.Toplevel()
+        self.root = tkinter.Toplevel()
         self.page = page
         self.page_dict = self.page.json()
         # Check to see if player profile exists based on the 64 bit ID number
         if len(self.page_dict['response']['players']) == 0:
-            top = Tkinter.Toplevel()
+            top = tkinter.Toplevel()
             top.title("Error")
 
-            msg = Tkinter.Message(top, text="Player not found")
+            msg = tkinter.Message(top, text="Player not found")
             msg.pack()
 
-            button = Tkinter.Button(top, text="Dismiss", command=top.destroy)
+            button = tkinter.Button(top, text="Dismiss", command=top.destroy)
             button.pack()
             self.root.destroy()
             return
@@ -226,14 +226,14 @@ class ProfileDisplay:
         self.img = PIL.Image.open(BytesIO(self.r.content))
         self.img = self.img.resize((150, 150), PIL.Image.ANTIALIAS)
         self.photo = PIL.ImageTk.PhotoImage(self.img)
-        self.img_label = Tkinter.Label(self.root, image=self.photo)
+        self.img_label = tkinter.Label(self.root, image=self.photo)
         self.img_label.pack()
         self.text = (
             'Name: ' + self.page_dict_list['personaname'] + '\n' +
             'Profile URL: ' + self.page_dict_list['profileurl'] + '\n' +
             'Online Status: ' + self.online_status
         )
-        self.text_label = Tkinter.Label(self.root,text = self.text).pack()
+        self.text_label = tkinter.Label(self.root,text = self.text).pack()
         self.root.mainloop()
 class Weapon:
     def __init__(self, link_p, *args):
@@ -250,37 +250,37 @@ class AddItem:
     def __init__(self):
         global root
         if (root == None):
-            root = Tkinter.Tk()
+            root = tkinter.Tk()
             self.root = root
-            print 'root is taken by' + str(self)
+            print('root is taken by' + str(self))
         else:
-            self.root = Tkinter.Toplevel()
+            self.root = tkinter.Toplevel()
 
         self.root.title('Add Item to List')
         # Need 3 StringVar/IntVar
-        self.link_arg = Tkinter.StringVar()
-        self.name_arg = Tkinter.StringVar()
-        self.price_arg= Tkinter.DoubleVar()
+        self.link_arg = tkinter.StringVar()
+        self.name_arg = tkinter.StringVar()
+        self.price_arg= tkinter.DoubleVar()
         # Need 3 Entry Fields
-        self.link_entry = Tkinter.Entry(self.root, textvariable=self.link_arg).grid(row=2, column=3)
-        self.name_entry = Tkinter.Entry(self.root, textvariable=self.name_arg).grid(row=1, column=3)
-        self.price_entry= Tkinter.Entry(self.root, textvariable=self.price_arg).grid(row=3, column=3)
+        self.link_entry = tkinter.Entry(self.root, textvariable=self.link_arg).grid(row=2, column=3)
+        self.name_entry = tkinter.Entry(self.root, textvariable=self.name_arg).grid(row=1, column=3)
+        self.price_entry= tkinter.Entry(self.root, textvariable=self.price_arg).grid(row=3, column=3)
         #Need 3 Labels for Text for Entry
-        self.name_label = Tkinter.Label(self.root,text="Name: ").grid(row=1,column=2)
-        self.link_label = Tkinter.Label(self.root, text="Link: ").grid(row=2, column=2)
-        self.price_label= Tkinter.Label(self.root, text="Price: ").grid(row=3, column=2)
+        self.name_label = tkinter.Label(self.root,text="Name: ").grid(row=1,column=2)
+        self.link_label = tkinter.Label(self.root, text="Link: ").grid(row=2, column=2)
+        self.price_label= tkinter.Label(self.root, text="Price: ").grid(row=3, column=2)
 
         # Button to add entries to market_store.txt
-        self.add_sell_button = Tkinter.Button(self.root, text="Add to Sell List", command=self.AddToSellList).grid(row=4, column=4)
-        self.add_buy_button = Tkinter.Button(self.root, text="Add to Buy List", command=self.AddToBuyList).grid(row=4, column=3)
+        self.add_sell_button = tkinter.Button(self.root, text="Add to Sell List", command=self.AddToSellList).grid(row=4, column=4)
+        self.add_buy_button = tkinter.Button(self.root, text="Add to Buy List", command=self.AddToBuyList).grid(row=4, column=3)
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
     def CreateErrorBox(self, errorMsg):
-        print("Error - " + errorMsg)
-        error_popup = Tkinter.Toplevel()
+        print(("Error - " + errorMsg))
+        error_popup = tkinter.Toplevel()
         error_popup.title('Error')
-        error__label = Tkinter.Label(error_popup, text=errorMsg).pack()
+        error__label = tkinter.Label(error_popup, text=errorMsg).pack()
         error_popup.after(3000, error_popup.destroy)
         error_popup.mainloop()
 
@@ -305,9 +305,9 @@ class AddItem:
             line_counter = 0
             for row in read_csv:
                 if row[0] == temp1:
-                    print('Duplicate found at line ' + str(line_counter) + '.\n')
-                    duplicate_popup = Tkinter.Toplevel()
-                    duplicate_label = Tkinter.Label(duplicate_popup,text="Duplicate found at line " + str(line_counter + 1))
+                    print(('Duplicate found at line ' + str(line_counter) + '.\n'))
+                    duplicate_popup = tkinter.Toplevel()
+                    duplicate_label = tkinter.Label(duplicate_popup,text="Duplicate found at line " + str(line_counter + 1))
                     duplicate_label.pack()
                     duplicate_popup.title("Error - Duplicate Link Found")
                     duplicate_popup.mainloop()
@@ -339,9 +339,9 @@ class AddItem:
             line_counter = 0
             for row in read_csv:
                 if row[0] == temp1:
-                    print('Duplicate found at line ' + str(line_counter) + '.\n')
-                    duplicate_popup = Tkinter.Toplevel()
-                    duplicate_label = Tkinter.Label(duplicate_popup,text="Duplicate found at line " + str(line_counter + 1))
+                    print(('Duplicate found at line ' + str(line_counter) + '.\n'))
+                    duplicate_popup = tkinter.Toplevel()
+                    duplicate_label = tkinter.Label(duplicate_popup,text="Duplicate found at line " + str(line_counter + 1))
                     duplicate_label.pack()
                     duplicate_popup.title("Error - Duplicate Link Found")
                     duplicate_popup.mainloop()
@@ -359,30 +359,30 @@ class Calculator:
     def __init__(self):
         global root
         if (root == None):
-            root = Tkinter.Tk()
+            root = tkinter.Tk()
             self.root = root
-            print 'root is taken by' + str(self)
+            print('root is taken by' + str(self))
         else:
-            self.root = Tkinter.Toplevel()
+            self.root = tkinter.Toplevel()
         self.root.title("Calculator")
 
         # Display entry box-----------------
-        self.price_arg = Tkinter.DoubleVar()
-        self.price_0result = Tkinter.DoubleVar()
-        self.price_15result = Tkinter.DoubleVar()
+        self.price_arg = tkinter.DoubleVar()
+        self.price_0result = tkinter.DoubleVar()
+        self.price_15result = tkinter.DoubleVar()
 
-        self.price_input_label = Tkinter.Label(self.root, text='Enter price')
+        self.price_input_label = tkinter.Label(self.root, text='Enter price')
         self.price_input_label.pack()
-        self.price_input_entry = Tkinter.Entry(self.root, textvariable=self.price_arg)
+        self.price_input_entry = tkinter.Entry(self.root, textvariable=self.price_arg)
         self.price_input_entry.pack()
 
-        self.price_button = Tkinter.Button(self.root, text ="Calculate!",command=self.LaunchCalculation).pack()
+        self.price_button = tkinter.Button(self.root, text ="Calculate!",command=self.LaunchCalculation).pack()
 
-        self.price_output0_label = Tkinter.Label(self.root, text='Break Even').pack()
-        self.price_output0_entry = Tkinter.Entry(self.root,textvariable=self.price_0result, state='readonly').pack()
+        self.price_output0_label = tkinter.Label(self.root, text='Break Even').pack()
+        self.price_output0_entry = tkinter.Entry(self.root,textvariable=self.price_0result, state='readonly').pack()
 
-        self.price_output15_label = Tkinter.Label(self.root, text='15c Profit').pack()
-        self.price_output15_entry = Tkinter.Entry(self.root, textvariable=self.price_15result, state='readonly').pack()
+        self.price_output15_label = tkinter.Label(self.root, text='15c Profit').pack()
+        self.price_output15_entry = tkinter.Entry(self.root, textvariable=self.price_15result, state='readonly').pack()
 
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
@@ -405,11 +405,11 @@ class SteamScraperApp:
         global root
 
         if (root == None):
-            root = Tkinter.Tk()
+            root = tkinter.Tk()
             self.root = root
-            print 'root is taken by' + str(self)
+            print('root is taken by' + str(self))
         else:
-            self.root = Tkinter.Toplevel()
+            self.root = tkinter.Toplevel()
         self.list_of_items = list_of_items_p
         # Arrays used for reference
         self.photo_arr = []
@@ -422,44 +422,44 @@ class SteamScraperApp:
 
         # New display mechanics
         self.results_per_page = settings_json['maxresultsperpage']
-        print 'resultsperpage = ' + str(self.results_per_page)
+        print('resultsperpage = ' + str(self.results_per_page))
         self.current_page__img_arr = []
         self.current_page__lbl_arr = []
         self.current_page_number = 0
 
-        print 'Current_page_number = ' + str(self.current_page_number)
+        print('Current_page_number = ' + str(self.current_page_number))
         self.max_page_number = 0
 
         #Frames
-        self.buttons_frame = Tkinter.Frame(self.root,height=2, bd=1, relief='sunken')
+        self.buttons_frame = tkinter.Frame(self.root,height=2, bd=1, relief='sunken')
         self.buttons_frame.pack()
-        self.items_frame = Tkinter.Frame(self.root,height=2, bd=1, relief='sunken')
+        self.items_frame = tkinter.Frame(self.root,height=2, bd=1, relief='sunken')
         self.items_frame.pack()
         # Re-list items
         self.first_time_open()
 
     def refresh(self):
         global items_sell
-        print 'refresh called'
-        print 'beginning destruction of widgets'
+        print('refresh called')
+        print( 'beginning destruction of widgets')
         # Destroy the widgets
-        print 'Deleting' + str(len(self.img_label_arr)) + 'items from img_label_arr'
+        print(('Deleting' + str(len(self.img_label_arr)) + 'items from img_label_arr'))
 
         for item in self.img_label_arr:
-            print 'Destorying item' + str(item) + 'from img_label_arr'
+            print(('Destorying item' + str(item) + 'from img_label_arr'))
             item.destroy()
-        print 'Done destorying items in img_label_arr'
+        print ('Done destorying items in img_label_arr')
         for item in self.price_label_arr:
-            print 'Destroying item' + str(item) + 'from price_label_arr'
+            print(('Destroying item' + str(item) + 'from price_label_arr'))
             item.destroy()
-        print 'Done destorying items in price_label_arr'
+        print ('Done destorying items in price_label_arr')
 
         # Arrays
         self.img_label_arr = []
         self.price_label_arr = []
         # Getting data
 
-        print 'Emptying items_sell'
+        print ('Emptying items_sell')
         for item in items_sell:
             del item
         items_sell = []
@@ -497,21 +497,22 @@ class SteamScraperApp:
         Scan_For_Link_Errors('market_buy.txt')
 
     def display_page(self):
-        print 'display_page called'
+        print('display_page called')
         arr_s = self.current_page_number * self.results_per_page
         max_index = self.current_page_number * self.results_per_page + (self.results_per_page-1)
         while arr_s <= max_index:
             try:
                 self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
                 self.price_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter + 1)
-            except IndexError, Tkinter.TclError:
+            except IndexError as xxx_todo_changeme:
+                tkinter.TclError = xxx_todo_changeme
                 break
             arr_s += 1
             self.row_counter += 1
         self.row_counter = 0
 
     def forget_page(self):
-        print 'forget_page called'
+        print('forget_page called')
         arr_s = self.current_page_number * self.results_per_page
         max_index = self.current_page_number * self.results_per_page + (self.results_per_page - 1)
         while arr_s <= max_index:
@@ -524,13 +525,13 @@ class SteamScraperApp:
         self.row_counter = 0
 
     def next_page(self):
-        print 'next_page called'
+        print('next_page called')
         # Forget the grid in the current page
         self.forget_page()
         # Move over to the new page
         if self.current_page_number < self.max_page_number:
             self.current_page_number +=1     # Increment
-        print 'Current_page_number = ' + str(self.current_page_number)
+        print('Current_page_number = ' + str(self.current_page_number))
         # Re-list new pages
         self.display_page()
 
@@ -543,13 +544,13 @@ class SteamScraperApp:
             self.prev_page_button['state'] = 'normal'
 
     def prev_page(self):
-        print 'prev_page called'
+        print('prev_page called')
         # Forget the grid in the current page
         self.forget_page()
         # Move over to the new page
         if self.current_page_number > 0:
             self.current_page_number-=1     # Decrement
-        print 'Current_page_number = ' + str(self.current_page_number)
+        print('Current_page_number = ' + str(self.current_page_number))
         #Re-list new pages
         self.display_page()
         # Enable and Disable Buttons
@@ -561,12 +562,12 @@ class SteamScraperApp:
             self.next_page_button['state'] = 'normal'
 
     def first_time_open(self):
-        print 'first_time_open called'
+        print('first_time_open called')
         self.get_data()
         self.DrawMainWindow()
     # Fetches data, creates Tkinter Labels, then stores it into img_label_arr and price_label_arr
     def get_data(self):
-        print 'get_data'
+        print('get_data')
         for item in self.list_of_items:
             # Print the text Information ------------------------------------------------------------
             # Prices for profit
@@ -583,12 +584,12 @@ class SteamScraperApp:
             request_url = baseURL + hash_name[-1]
             # Create json
             try:
-                print 'Requesting JSON from: ' + request_url
+                print('Requesting JSON from: ' + request_url)
                 page = requests.get(request_url)
                 # print("RequestURL:" + request_url)
                 page.raise_for_status()
             except requests.HTTPError:
-                print("Unable to make JSON request for item" + item.name)
+                print(("Unable to make JSON request for item" + item.name))
                 continue
 
             json_dict = page.json()
@@ -596,8 +597,8 @@ class SteamScraperApp:
                 text_to_display = (
                     "Name: " + item.name + '\n' +
                     "Purchase Price: " + item.purchase_price + '\n' +
-                    "Median Price: " + json_dict[u'median_price'] + '\n' +
-                    "Lowest Price: " + json_dict[u'lowest_price'] + '\n' +
+                    "Median Price: " + json_dict['median_price'] + '\n' +
+                    "Lowest Price: " + json_dict['lowest_price'] + '\n' +
                     "Break Even: " + break_even_price + '\n' +
                     "15c Profit: " + fifteen_cent + '\n' +
                     "20c Profit: " + twenty_cent + '\n' +
@@ -609,7 +610,7 @@ class SteamScraperApp:
                 text_to_display = 'Key error. Please refresh in a few minutes.'
                 continue
 
-            price_label = Tkinter.Label(self.items_frame, text=text_to_display)
+            price_label = tkinter.Label(self.items_frame, text=text_to_display)
             # Display the image -------------------------------------------------------------------------
             # Get img_url
             page = requests.get(item.url)
@@ -625,49 +626,49 @@ class SteamScraperApp:
                 img = img.resize((150, 150), PIL.Image.ANTIALIAS)
                 photo = PIL.ImageTk.PhotoImage(img)
                 # Reference the image and photo
-                img_label = Tkinter.Label(self.items_frame, image=photo)
+                img_label = tkinter.Label(self.items_frame, image=photo)
                 # append to arrays. Append all 3 only when they are all valid
                 self.photo_arr.append(photo)
                 self.img_label_arr.append(img_label)
                 self.price_label_arr.append(price_label)
             except IndexError:
-                print "img_url[0] == None:"
-                print(item.url)
+                print("img_url[0] == None:")
+                print((item.url))
                 continue
 
         # Debug info
-        print 'img_label_arr length = ' + str(float(len(self.img_label_arr)))
+        print('img_label_arr length = ' + str(float(len(self.img_label_arr))))
         self.max_page_number = math.ceil(float(len(self.img_label_arr))/self.results_per_page) - 1.0
-        print 'maxPagenumber = ' + str(self.max_page_number)
+        print('maxPagenumber = ' + str(self.max_page_number))
 
     def DrawMainWindow(self):
-        print 'DrawWindow called'
+        print('DrawWindow called')
 
-        refresh_button = Tkinter.Button(self.buttons_frame, text="Refresh", command=self.refresh)
+        refresh_button = tkinter.Button(self.buttons_frame, text="Refresh", command=self.refresh)
         refresh_button.grid(row=0, column=0, stick='nw')
-        error_checking_button = Tkinter.Button(self.buttons_frame, text='Error Check', command=self.ScanForLinkErrorCaller)
+        error_checking_button = tkinter.Button(self.buttons_frame, text='Error Check', command=self.ScanForLinkErrorCaller)
         error_checking_button.grid(row=0, column=1, stick='nw')
         # Other features of application
-        profile_button = Tkinter.Button(self.buttons_frame, text="Profile", command=self.open_profile)
+        profile_button = tkinter.Button(self.buttons_frame, text="Profile", command=self.open_profile)
         profile_button.grid(row=0, column=2, stick='nw')
-        add__to_button = Tkinter.Button(self.buttons_frame, text="Add Item to List", command=self.open_item_adder)
+        add__to_button = tkinter.Button(self.buttons_frame, text="Add Item to List", command=self.open_item_adder)
         add__to_button.grid(row=0, column=3, stick='nw')
-        calc_button = Tkinter.Button(self.buttons_frame, text="Calculator", command=self.open_calculator)
+        calc_button = tkinter.Button(self.buttons_frame, text="Calculator", command=self.open_calculator)
         calc_button.grid(row=0, column=4, stick='nw')
-        service_stat_button = Tkinter.Button(self.buttons_frame, text="Steam Service Stat", command=self.open_steam_status)
+        service_stat_button = tkinter.Button(self.buttons_frame, text="Steam Service Stat", command=self.open_steam_status)
         service_stat_button.grid(row=0, column=5, stick='nw')
-        settings_button = Tkinter.Button(self.buttons_frame, text="Settings", command=self.open_settings)
+        settings_button = tkinter.Button(self.buttons_frame, text="Settings", command=self.open_settings)
         settings_button.grid(row=0, column=6, stick='nw')
         #
-        self.next_page_button = Tkinter.Button(self.buttons_frame, text="Next Page", state='normal', command=self.next_page)
+        self.next_page_button = tkinter.Button(self.buttons_frame, text="Next Page", state='normal', command=self.next_page)
         self.next_page_button.grid(row=1, column=1, stick='nw')
-        self.prev_page_button = Tkinter.Button(self.buttons_frame, text="Prev Page", state='disabled', command=self.prev_page)
+        self.prev_page_button = tkinter.Button(self.buttons_frame, text="Prev Page", state='disabled', command=self.prev_page)
         self.prev_page_button.grid(row=1, column=0, stick='nw')
         # Draw window -------------------------
         self.display_page()
-        print 'Done fetching data'
+        print('Done fetching data')
         # root checker
-        print 'listItems() img_label_array length = ' + str(len(self.img_label_arr))
+        print('listItems() img_label_array length = ' + str(len(self.img_label_arr)))
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
     #modify self.list_of_items using items_sell
@@ -695,7 +696,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         self.SetIcon(icon, TRAY_TOOLTIP)
 
     def on_left_down(self, event):
-        print 'Tray icon was left-clicked.'
+        print('Tray icon was left-clicked.')
 
     def on_exit(self, event):
         wx.CallAfter(self.Destroy)
@@ -725,7 +726,7 @@ class App(wx.App):
         return True
 
 def grab_data_from_textfile():
-    print 'Grab data called'
+    print('Grab data called')
     # Grab items from text file
     with open('market_sell.txt') as csv_file:
         read_csv = csv.reader(csv_file, delimiter=',')
@@ -754,5 +755,5 @@ def main():
 
 
 if __name__ == '__main__':
-    print 'Compile Complete'
+    print('Compile Complete')
     main()
