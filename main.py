@@ -19,7 +19,7 @@ TRAY_ICON = 'icon.png'
 
 api_key = '7C28D264D4A05EB3ED84423B00F0F392'
 base_profile_URL = ('http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
-                    + '?key=7C28D264D4A05EB3ED84423B00F0F392&steamids=')
+                    + '?key='+api_key+'&steamids=')
 steamTax = 1.15
 # baseURL string. DO NOT MODIFY
 baseURL = 'http://steamcommunity.com/market/priceoverview/?currency=13&appid=730&market_hash_name='
@@ -30,8 +30,6 @@ check_thread = None
 
 # Settings file
 settings_json = None
-
-
 
 
 def main():
@@ -70,42 +68,41 @@ def Create_Menu_Item(menu, label, func):
 
 
 # def Check_Prices_Sell(time_s):
-    global check_thread
-    check_thread = threading.Timer(time_s, Check_Prices_Sell)
-    check_thread.start()
+    # global check_thread
+    # check_thread = threading.Timer(time_s, Check_Prices_Sell)
+    # check_thread.start()
 
-    # possible_sell_itmes = []
-    for item in items_sell:
-        fifteen_cent = str("%.2f" %
-                           ((float(item.purchase_price) + 0.15) * steamTax))
-        # Split the url using '/' as the delimiter
-        hash_name = item.url.split('/')
-        # Generate the json URL for the item/weapon. Something along the lines of
-        # http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=StatTrak%E2%84%A2%20P250%20%7C%20Steel%20Disruption%20%28Factory%20New%29
-        request_url = baseURL + hash_name[-1]
-        # Create json
-        try:
-            page = requests.get(request_url)
-            # print("RequestURL:" + request_url)
-            page.raise_for_status()
-        except requests.HTTPError:
-            print(
-                ("CheckPrices_Sell -- Unable to make JSON request for item" + item.name))
-            continue
-        json_dict = page.json()
-        try:
-            if item.purchase_price != 0.0 and json_dict['lowest_price'] >= fifteen_cent:
-                possible_sell_itmes.append(item.name)
-        except KeyError:
-            continue
+    # # possible_sell_itmes = []
+    # for item in items_sell:
+    #     fifteen_cent = str("%.2f" %
+    #                        ((float(item.purchase_price) + 0.15) * steamTax))
+    #     # Split the url using '/' as the delimiter
+    #     hash_name = item.url.split('/')
+    #     # Generate the json URL for the item/weapon. Something along the lines of
+    #     # http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=StatTrak%E2%84%A2%20P250%20%7C%20Steel%20Disruption%20%28Factory%20New%29
+    #     request_url = baseURL + hash_name[-1]
+    #     # Create json
+    #     try:
+    #         page = requests.get(request_url)
+    #         # print("RequestURL:" + request_url)
+    #         page.raise_for_status()
+    #     except requests.HTTPError:
+    #         print(
+    #             ("CheckPrices_Sell -- Unable to make JSON request for item" + item.name))
+    #         continue
+    #     json_dict = page.json()
+    #     try:
+    #         if item.purchase_price != 0.0 and json_dict['lowest_price'] >= fifteen_cent:
+    #             possible_sell_itmes.append(item.name)
+    #     except KeyError:
+    #         continue
     # if possible_sell_itmes:
     #     msg = wx.NotificationMessage()
     #     msg.SetTitle('Items to sell')
     #     msg.SetMessage(str(possible_sell_itmes))
     #     msg.Show()
+
 # Makes sure that the links in file_name are valid
-
-
 def Scan_For_Link_Errors(file_name):
     error_flag = False
     correct_lines = []
@@ -113,7 +110,6 @@ def Scan_For_Link_Errors(file_name):
     infile = open(file_name, 'r')
     infile_readlines = infile.readlines()
     for row in infile_readlines:
-        # print row
         if 'http://steamcommunity.com/market' in row:
             correct_lines.append(row)
         else:
@@ -156,13 +152,13 @@ class SettingsWindow:
         else:
             self.root = tkinter.Toplevel()
         self.root.title('Settings')
-        # Notifications
-        self.notification_arg = tkinter.IntVar()
-        self.notification_arg.set(settings_json['notifications'])
-        self.notification_entry = tkinter.Entry(
-            self.root, textvariable=self.notification_arg).grid(row=1, column=3)
-        self.notification_label = tkinter.Label(
-            self.root, text='Notification').grid(row=1, column=2)
+        # # Notifications
+        # self.notification_arg = tkinter.IntVar()
+        # self.notification_arg.set(settings_json['notifications'])
+        # self.notification_entry = tkinter.Entry(
+        #     self.root, textvariable=self.notification_arg).grid(row=1, column=3)
+        # self.notification_label = tkinter.Label(
+        #     self.root, text='Notification').grid(row=1, column=2)
         # Results Per Page
         self.resultsPerPage_arg = tkinter.IntVar()
         self.resultsPerPage_arg.set(settings_json['maxresultsperpage'])
@@ -170,13 +166,13 @@ class SettingsWindow:
             self.root, textvariable=self.resultsPerPage_arg).grid(row=2, column=3)
         self.resultsPerPage_label = tkinter.Label(
             self.root, text='Results Per Page').grid(row=2, column=2)
-        # Interval Time
-        self.checkTime_arg = tkinter.IntVar()
-        self.checkTime_arg.set(settings_json['checktime'])
-        self.checkTime_entry = tkinter.Entry(
-            self.root, textvariable=self.checkTime_arg).grid(row=3, column=3)
-        self.checkTime_label = tkinter.Label(
-            self.root, text='Notification Intervale (s)').grid(row=3, column=2)
+        # # Interval Time
+        # self.checkTime_arg = tkinter.IntVar()
+        # self.checkTime_arg.set(settings_json['checktime'])
+        # self.checkTime_entry = tkinter.Entry(
+        #     self.root, textvariable=self.checkTime_arg).grid(row=3, column=3)
+        # self.checkTime_label = tkinter.Label(
+        #     self.root, text='Notification Intervale (s)').grid(row=3, column=2)
 
         # Save Button
         self.save_button = tkinter.Button(
@@ -191,9 +187,9 @@ class SettingsWindow:
 
     def SaveSettings(self):
         global settings_json
-        settings_json['notifications'] = self.notification_arg.get()
+        # settings_json['notifications'] = self.notification_arg.get()
         settings_json['maxresultsperpage'] = self.resultsPerPage_arg.get()
-        settings_json['checktime'] = self.checkTime_arg.get()
+        # settings_json['checktime'] = self.checkTime_arg.get()
         Write_Settings()
         print('Settings Saved')
 
