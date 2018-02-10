@@ -1,4 +1,7 @@
+#!/usr/bin/env python
+
 import wx
+# import wx
 from lxml import html
 import requests
 import PIL.Image
@@ -28,7 +31,25 @@ check_thread = None
 # Settings file
 settings_json = None
 
-#arrays
+
+
+
+def main():
+    print('Program Starting')
+    Scan_For_Link_Errors('market_sell.txt')
+    Scan_For_Link_Errors('market_buy.txt')
+    Read_Settings()
+    app = wx.App(False)
+    grab_data_from_textfile()
+
+    # if settings_json["notifications"] == 1:
+    #     Check_Prices_Sell(settings_json["checktime"])
+
+    SteamScraperApp(items_sell)
+    app.MainLoop()
+
+
+# arrays
 
 #####################################################################
 
@@ -38,20 +59,25 @@ def Check_For_Root_Ownership(root_param):
     if root_param == root and root != None:
         root = None
         print('root is freed by ' + str(root_param))
+
+
 def Create_Menu_Item(menu, label, func):
     item = wx.MenuItem(menu, -1, label)
     menu.Bind(wx.EVT_MENU, func, id=item.GetId())
     menu.AppendItem(item)
     return item
 # Function that will check prices every time_s seconds and display a notification when items are ready to sell
-def Check_Prices_Sell(time_s):
+
+
+# def Check_Prices_Sell(time_s):
     global check_thread
     check_thread = threading.Timer(time_s, Check_Prices_Sell)
     check_thread.start()
 
-    possible_sell_itmes = []
+    # possible_sell_itmes = []
     for item in items_sell:
-        fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
+        fifteen_cent = str("%.2f" %
+                           ((float(item.purchase_price) + 0.15) * steamTax))
         # Split the url using '/' as the delimiter
         hash_name = item.url.split('/')
         # Generate the json URL for the item/weapon. Something along the lines of
@@ -63,25 +89,28 @@ def Check_Prices_Sell(time_s):
             # print("RequestURL:" + request_url)
             page.raise_for_status()
         except requests.HTTPError:
-            print(("CheckPrices_Sell -- Unable to make JSON request for item" + item.name))
+            print(
+                ("CheckPrices_Sell -- Unable to make JSON request for item" + item.name))
             continue
         json_dict = page.json()
         try:
-            if item.purchase_price!=0.0 and json_dict['lowest_price'] >= fifteen_cent:
+            if item.purchase_price != 0.0 and json_dict['lowest_price'] >= fifteen_cent:
                 possible_sell_itmes.append(item.name)
         except KeyError:
             continue
-    if possible_sell_itmes:
-        msg = wx.NotificationMessage()
-        msg.SetTitle('Items to sell')
-        msg.SetMessage(str(possible_sell_itmes))
-        msg.Show()
+    # if possible_sell_itmes:
+    #     msg = wx.NotificationMessage()
+    #     msg.SetTitle('Items to sell')
+    #     msg.SetMessage(str(possible_sell_itmes))
+    #     msg.Show()
 # Makes sure that the links in file_name are valid
+
+
 def Scan_For_Link_Errors(file_name):
     error_flag = False
     correct_lines = []
     print('Starting link error scan')
-    infile = open(file_name,'r')
+    infile = open(file_name, 'r')
     infile_readlines = infile.readlines()
     for row in infile_readlines:
         # print row
@@ -93,7 +122,7 @@ def Scan_For_Link_Errors(file_name):
 
     open(file_name, 'w').close()
 
-    outfile = open(file_name,'w')
+    outfile = open(file_name, 'w')
     for item in correct_lines:
         outfile.write(item)
     outfile.close()
@@ -102,16 +131,20 @@ def Scan_For_Link_Errors(file_name):
     if error_flag == True:
         print('Errors found and fixed')
 # Load settings to prevent opening settings.txt over and over again
+
+
 def Read_Settings():
     global settings_json
     with open('settings.txt') as settings:
         settings_json = json.load(settings)
         settings.close()
 
+
 def Write_Settings():
     global settings_json
-    with open('settings.txt','w') as settings:
-        json.dump(settings_json,settings)
+    with open('settings.txt', 'w') as settings:
+        json.dump(settings_json, settings)
+
 
 class SettingsWindow:
     def __init__(self):
@@ -126,21 +159,28 @@ class SettingsWindow:
         # Notifications
         self.notification_arg = tkinter.IntVar()
         self.notification_arg.set(settings_json['notifications'])
-        self.notification_entry = tkinter.Entry(self.root, textvariable=self.notification_arg).grid(row=1,column=3)
-        self.notification_label = tkinter.Label(self.root,text='Notification').grid(row=1,column=2)
+        self.notification_entry = tkinter.Entry(
+            self.root, textvariable=self.notification_arg).grid(row=1, column=3)
+        self.notification_label = tkinter.Label(
+            self.root, text='Notification').grid(row=1, column=2)
         # Results Per Page
         self.resultsPerPage_arg = tkinter.IntVar()
         self.resultsPerPage_arg.set(settings_json['maxresultsperpage'])
-        self.resultsPerPage_entry= tkinter.Entry(self.root, textvariable=self.resultsPerPage_arg).grid(row=2, column=3)
-        self.resultsPerPage_label = tkinter.Label(self.root, text='Results Per Page').grid(row=2, column=2)
+        self.resultsPerPage_entry = tkinter.Entry(
+            self.root, textvariable=self.resultsPerPage_arg).grid(row=2, column=3)
+        self.resultsPerPage_label = tkinter.Label(
+            self.root, text='Results Per Page').grid(row=2, column=2)
         # Interval Time
         self.checkTime_arg = tkinter.IntVar()
         self.checkTime_arg.set(settings_json['checktime'])
-        self.checkTime_entry = tkinter.Entry(self.root, textvariable=self.checkTime_arg).grid(row=3, column=3)
-        self.checkTime_label = tkinter.Label(self.root, text='Notification Intervale (s)').grid(row=3, column=2)
+        self.checkTime_entry = tkinter.Entry(
+            self.root, textvariable=self.checkTime_arg).grid(row=3, column=3)
+        self.checkTime_label = tkinter.Label(
+            self.root, text='Notification Intervale (s)').grid(row=3, column=2)
 
         # Save Button
-        self.save_button = tkinter.Button(self.root, text="Save", command=self.SaveSettings).grid(row=4, column=4)
+        self.save_button = tkinter.Button(
+            self.root, text="Save", command=self.SaveSettings).grid(row=4, column=4)
         #
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
@@ -156,6 +196,8 @@ class SettingsWindow:
         settings_json['checktime'] = self.checkTime_arg.get()
         Write_Settings()
         print('Settings Saved')
+
+
 class ProfileSearch:
     def __init__(self):
         global root
@@ -168,8 +210,10 @@ class ProfileSearch:
         self.root.title('Profile Viewer')
         # self.search_param = Tkinter.StringVar()
         self.profile_arg = tkinter.IntVar()
-        self.profile_button = tkinter.Button(self.root, text="Enter 64bit Steam ID", command = self.GotoProfile).grid(row=0, column=0)
-        self.profile_entry = tkinter.Entry(self.root, textvariable=self.profile_arg).grid(row=0, column=2)
+        self.profile_button = tkinter.Button(
+            self.root, text="Enter 64bit Steam ID", command=self.GotoProfile).grid(row=0, column=0)
+        self.profile_entry = tkinter.Entry(
+            self.root, textvariable=self.profile_arg).grid(row=0, column=2)
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
@@ -198,6 +242,8 @@ class ProfileSearch:
     def root_owner_caller(self):
         Check_For_Root_Ownership(self.root)
         self.root.destroy()
+
+
 class ProfileDisplay:
     def __init__(self, page):
         self.root = tkinter.Toplevel()
@@ -233,8 +279,10 @@ class ProfileDisplay:
             'Profile URL: ' + self.page_dict_list['profileurl'] + '\n' +
             'Online Status: ' + self.online_status
         )
-        self.text_label = tkinter.Label(self.root,text = self.text).pack()
+        self.text_label = tkinter.Label(self.root, text=self.text).pack()
         self.root.mainloop()
+
+
 class Weapon:
     def __init__(self, link_p, *args):
         self.url = link_p
@@ -246,6 +294,8 @@ class Weapon:
             self.purchase_price = args[1]
         else:
             self.purchase_price = '0'
+
+
 class AddItem:
     def __init__(self):
         global root
@@ -260,19 +310,27 @@ class AddItem:
         # Need 3 StringVar/IntVar
         self.link_arg = tkinter.StringVar()
         self.name_arg = tkinter.StringVar()
-        self.price_arg= tkinter.DoubleVar()
+        self.price_arg = tkinter.DoubleVar()
         # Need 3 Entry Fields
-        self.link_entry = tkinter.Entry(self.root, textvariable=self.link_arg).grid(row=2, column=3)
-        self.name_entry = tkinter.Entry(self.root, textvariable=self.name_arg).grid(row=1, column=3)
-        self.price_entry= tkinter.Entry(self.root, textvariable=self.price_arg).grid(row=3, column=3)
-        #Need 3 Labels for Text for Entry
-        self.name_label = tkinter.Label(self.root,text="Name: ").grid(row=1,column=2)
-        self.link_label = tkinter.Label(self.root, text="Link: ").grid(row=2, column=2)
-        self.price_label= tkinter.Label(self.root, text="Price: ").grid(row=3, column=2)
+        self.link_entry = tkinter.Entry(
+            self.root, textvariable=self.link_arg).grid(row=2, column=3)
+        self.name_entry = tkinter.Entry(
+            self.root, textvariable=self.name_arg).grid(row=1, column=3)
+        self.price_entry = tkinter.Entry(
+            self.root, textvariable=self.price_arg).grid(row=3, column=3)
+        # Need 3 Labels for Text for Entry
+        self.name_label = tkinter.Label(
+            self.root, text="Name: ").grid(row=1, column=2)
+        self.link_label = tkinter.Label(
+            self.root, text="Link: ").grid(row=2, column=2)
+        self.price_label = tkinter.Label(
+            self.root, text="Price: ").grid(row=3, column=2)
 
         # Button to add entries to market_store.txt
-        self.add_sell_button = tkinter.Button(self.root, text="Add to Sell List", command=self.AddToSellList).grid(row=4, column=4)
-        self.add_buy_button = tkinter.Button(self.root, text="Add to Buy List", command=self.AddToBuyList).grid(row=4, column=3)
+        self.add_sell_button = tkinter.Button(
+            self.root, text="Add to Sell List", command=self.AddToSellList).grid(row=4, column=4)
+        self.add_buy_button = tkinter.Button(
+            self.root, text="Add to Buy List", command=self.AddToBuyList).grid(row=4, column=3)
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
 
@@ -284,7 +342,6 @@ class AddItem:
         error_popup.after(3000, error_popup.destroy)
         error_popup.mainloop()
 
-
     def AddToSellList(self):
         temp1 = self.link_arg.get()
         if('http://steamcommunity.com/market' not in temp1):
@@ -295,19 +352,21 @@ class AddItem:
             r = requests.get(temp1)
             r.raise_for_status()        # raise signal if not a valid link
         except requests.HTTPError:
-            self.CreateErrorBox('Cannot Access Link. Please  make sure Link is valid or if Steam is down')
+            self.CreateErrorBox(
+                'Cannot Access Link. Please  make sure Link is valid or if Steam is down')
 
         temp2 = self.name_arg.get()
         temp3 = str(self.price_arg.get())
         # Check for duplicate links
-        with open('market_sell.txt','r') as csv_file:
+        with open('market_sell.txt', 'r') as csv_file:
             read_csv = csv.reader(csv_file, delimiter=',')
             line_counter = 0
             for row in read_csv:
                 if row[0] == temp1:
                     print(('Duplicate found at line ' + str(line_counter) + '.\n'))
                     duplicate_popup = tkinter.Toplevel()
-                    duplicate_label = tkinter.Label(duplicate_popup,text="Duplicate found at line " + str(line_counter + 1))
+                    duplicate_label = tkinter.Label(
+                        duplicate_popup, text="Duplicate found at line " + str(line_counter + 1))
                     duplicate_label.pack()
                     duplicate_popup.title("Error - Duplicate Link Found")
                     duplicate_popup.mainloop()
@@ -328,7 +387,8 @@ class AddItem:
             r = requests.get(temp1)
             r.raise_for_status()        # raise signal if not a valid link
         except requests.HTTPError:
-            self.CreateErrorBox('Cannot Access Link. Please  make sure Link is valid or if Steam is down')
+            self.CreateErrorBox(
+                'Cannot Access Link. Please  make sure Link is valid or if Steam is down')
 
         temp2 = self.name_arg.get()
         temp3 = str(self.price_arg.get())
@@ -341,7 +401,8 @@ class AddItem:
                 if row[0] == temp1:
                     print(('Duplicate found at line ' + str(line_counter) + '.\n'))
                     duplicate_popup = tkinter.Toplevel()
-                    duplicate_label = tkinter.Label(duplicate_popup,text="Duplicate found at line " + str(line_counter + 1))
+                    duplicate_label = tkinter.Label(
+                        duplicate_popup, text="Duplicate found at line " + str(line_counter + 1))
                     duplicate_label.pack()
                     duplicate_popup.title("Error - Duplicate Link Found")
                     duplicate_popup.mainloop()
@@ -355,6 +416,8 @@ class AddItem:
     def root_owner_caller(self):
         Check_For_Root_Ownership(self.root)
         self.root.destroy()
+
+
 class Calculator:
     def __init__(self):
         global root
@@ -373,16 +436,22 @@ class Calculator:
 
         self.price_input_label = tkinter.Label(self.root, text='Enter price')
         self.price_input_label.pack()
-        self.price_input_entry = tkinter.Entry(self.root, textvariable=self.price_arg)
+        self.price_input_entry = tkinter.Entry(
+            self.root, textvariable=self.price_arg)
         self.price_input_entry.pack()
 
-        self.price_button = tkinter.Button(self.root, text ="Calculate!",command=self.LaunchCalculation).pack()
+        self.price_button = tkinter.Button(
+            self.root, text="Calculate!", command=self.LaunchCalculation).pack()
 
-        self.price_output0_label = tkinter.Label(self.root, text='Break Even').pack()
-        self.price_output0_entry = tkinter.Entry(self.root,textvariable=self.price_0result, state='readonly').pack()
+        self.price_output0_label = tkinter.Label(
+            self.root, text='Break Even').pack()
+        self.price_output0_entry = tkinter.Entry(
+            self.root, textvariable=self.price_0result, state='readonly').pack()
 
-        self.price_output15_label = tkinter.Label(self.root, text='15c Profit').pack()
-        self.price_output15_entry = tkinter.Entry(self.root, textvariable=self.price_15result, state='readonly').pack()
+        self.price_output15_label = tkinter.Label(
+            self.root, text='15c Profit').pack()
+        self.price_output15_entry = tkinter.Entry(
+            self.root, textvariable=self.price_15result, state='readonly').pack()
 
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
@@ -399,6 +468,8 @@ class Calculator:
         self.root.destroy()
 
     # Takes in a list of Weapon objects.
+
+
 class SteamScraperApp:
     def __init__(self, list_of_items_p):
         global settings_json
@@ -430,10 +501,12 @@ class SteamScraperApp:
         print('Current_page_number = ' + str(self.current_page_number))
         self.max_page_number = 0
 
-        #Frames
-        self.buttons_frame = tkinter.Frame(self.root,height=2, bd=1, relief='sunken')
+        # Frames
+        self.buttons_frame = tkinter.Frame(
+            self.root, height=2, bd=1, relief='sunken')
         self.buttons_frame.pack()
-        self.items_frame = tkinter.Frame(self.root,height=2, bd=1, relief='sunken')
+        self.items_frame = tkinter.Frame(
+            self.root, height=2, bd=1, relief='sunken')
         self.items_frame.pack()
         # Re-list items
         self.first_time_open()
@@ -441,25 +514,25 @@ class SteamScraperApp:
     def refresh(self):
         global items_sell
         print('refresh called')
-        print( 'beginning destruction of widgets')
+        print('beginning destruction of widgets')
         # Destroy the widgets
         print(('Deleting' + str(len(self.img_label_arr)) + 'items from img_label_arr'))
 
         for item in self.img_label_arr:
             print(('Destorying item' + str(item) + 'from img_label_arr'))
             item.destroy()
-        print ('Done destorying items in img_label_arr')
+        print('Done destorying items in img_label_arr')
         for item in self.price_label_arr:
             print(('Destroying item' + str(item) + 'from price_label_arr'))
             item.destroy()
-        print ('Done destorying items in price_label_arr')
+        print('Done destorying items in price_label_arr')
 
         # Arrays
         self.img_label_arr = []
         self.price_label_arr = []
         # Getting data
 
-        print ('Emptying items_sell')
+        print('Emptying items_sell')
         for item in items_sell:
             del item
         items_sell = []
@@ -486,7 +559,7 @@ class SteamScraperApp:
         Calculator()
 
     def open_steam_status(self):
-        webbrowser.open('https://steamstat.us/',new=2)
+        webbrowser.open('https://steamstat.us/', new=2)
 
     def root_owner_caller(self):
         Check_For_Root_Ownership(self.root)
@@ -499,11 +572,14 @@ class SteamScraperApp:
     def display_page(self):
         print('display_page called')
         arr_s = self.current_page_number * self.results_per_page
-        max_index = self.current_page_number * self.results_per_page + (self.results_per_page-1)
+        max_index = self.current_page_number * \
+            self.results_per_page + (self.results_per_page-1)
         while arr_s <= max_index:
             try:
-                self.img_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter)
-                self.price_label_arr[arr_s].grid(row=self.row_counter, column=self.column_counter + 1)
+                self.img_label_arr[arr_s].grid(
+                    row=self.row_counter, column=self.column_counter)
+                self.price_label_arr[arr_s].grid(
+                    row=self.row_counter, column=self.column_counter + 1)
             except IndexError as xxx_todo_changeme:
                 tkinter.TclError = xxx_todo_changeme
                 break
@@ -514,7 +590,8 @@ class SteamScraperApp:
     def forget_page(self):
         print('forget_page called')
         arr_s = self.current_page_number * self.results_per_page
-        max_index = self.current_page_number * self.results_per_page + (self.results_per_page - 1)
+        max_index = self.current_page_number * \
+            self.results_per_page + (self.results_per_page - 1)
         while arr_s <= max_index:
             try:
                 self.img_label_arr[arr_s].grid_forget()
@@ -530,7 +607,7 @@ class SteamScraperApp:
         self.forget_page()
         # Move over to the new page
         if self.current_page_number < self.max_page_number:
-            self.current_page_number +=1     # Increment
+            self.current_page_number += 1     # Increment
         print('Current_page_number = ' + str(self.current_page_number))
         # Re-list new pages
         self.display_page()
@@ -549,9 +626,9 @@ class SteamScraperApp:
         self.forget_page()
         # Move over to the new page
         if self.current_page_number > 0:
-            self.current_page_number-=1     # Decrement
+            self.current_page_number -= 1     # Decrement
         print('Current_page_number = ' + str(self.current_page_number))
-        #Re-list new pages
+        # Re-list new pages
         self.display_page()
         # Enable and Disable Buttons
         if self.current_page_number == 0:
@@ -566,16 +643,22 @@ class SteamScraperApp:
         self.get_data()
         self.DrawMainWindow()
     # Fetches data, creates Tkinter Labels, then stores it into img_label_arr and price_label_arr
+
     def get_data(self):
         print('get_data')
         for item in self.list_of_items:
             # Print the text Information ------------------------------------------------------------
             # Prices for profit
-            break_even_price = str("%.2f" % (float(item.purchase_price) * steamTax))
-            fifteen_cent = str("%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
-            twenty_cent = str("%.2f" % ((float(item.purchase_price) + 0.20) * steamTax))
-            twenty_five_cent = str("%.2f" % ((float(item.purchase_price) + 0.25) * steamTax))
-            thrity_cent = str("%.2f" % ((float(item.purchase_price) + 0.30) * steamTax))
+            break_even_price = str(
+                "%.2f" % (float(item.purchase_price) * steamTax))
+            fifteen_cent = str(
+                "%.2f" % ((float(item.purchase_price) + 0.15) * steamTax))
+            twenty_cent = str("%.2f" %
+                              ((float(item.purchase_price) + 0.20) * steamTax))
+            twenty_five_cent = str(
+                "%.2f" % ((float(item.purchase_price) + 0.25) * steamTax))
+            thrity_cent = str("%.2f" %
+                              ((float(item.purchase_price) + 0.30) * steamTax))
             # Split the url using '/' as the delimiter
             hash_name = item.url.split('/')
 
@@ -617,7 +700,8 @@ class SteamScraperApp:
             tree = html.fromstring(page.content)
 
             # Grab image URL using Xpath
-            img_url = tree.xpath('//*[@id="mainContents"]/div[2]/div/div[1]/img/@src')
+            img_url = tree.xpath(
+                '//*[@id="mainContents"]/div[2]/div/div[1]/img/@src')
             try:
                 self.temp = img_url[0]
                 # Convert and Resize image
@@ -638,48 +722,59 @@ class SteamScraperApp:
 
         # Debug info
         print('img_label_arr length = ' + str(float(len(self.img_label_arr))))
-        self.max_page_number = math.ceil(float(len(self.img_label_arr))/self.results_per_page) - 1.0
+        self.max_page_number = math.ceil(
+            float(len(self.img_label_arr))/self.results_per_page) - 1.0
         print('maxPagenumber = ' + str(self.max_page_number))
 
     def DrawMainWindow(self):
         print('DrawWindow called')
 
-        refresh_button = tkinter.Button(self.buttons_frame, text="Refresh", command=self.refresh)
+        refresh_button = tkinter.Button(
+            self.buttons_frame, text="Refresh", command=self.refresh)
         refresh_button.grid(row=0, column=0, stick='nw')
-        error_checking_button = tkinter.Button(self.buttons_frame, text='Error Check', command=self.ScanForLinkErrorCaller)
+        error_checking_button = tkinter.Button(
+            self.buttons_frame, text='Error Check', command=self.ScanForLinkErrorCaller)
         error_checking_button.grid(row=0, column=1, stick='nw')
         # Other features of application
-        profile_button = tkinter.Button(self.buttons_frame, text="Profile", command=self.open_profile)
+        profile_button = tkinter.Button(
+            self.buttons_frame, text="Profile", command=self.open_profile)
         profile_button.grid(row=0, column=2, stick='nw')
-        add__to_button = tkinter.Button(self.buttons_frame, text="Add Item to List", command=self.open_item_adder)
+        add__to_button = tkinter.Button(
+            self.buttons_frame, text="Add Item to List", command=self.open_item_adder)
         add__to_button.grid(row=0, column=3, stick='nw')
-        calc_button = tkinter.Button(self.buttons_frame, text="Calculator", command=self.open_calculator)
+        calc_button = tkinter.Button(
+            self.buttons_frame, text="Calculator", command=self.open_calculator)
         calc_button.grid(row=0, column=4, stick='nw')
-        service_stat_button = tkinter.Button(self.buttons_frame, text="Steam Service Stat", command=self.open_steam_status)
+        service_stat_button = tkinter.Button(
+            self.buttons_frame, text="Steam Service Stat", command=self.open_steam_status)
         service_stat_button.grid(row=0, column=5, stick='nw')
-        settings_button = tkinter.Button(self.buttons_frame, text="Settings", command=self.open_settings)
+        settings_button = tkinter.Button(
+            self.buttons_frame, text="Settings", command=self.open_settings)
         settings_button.grid(row=0, column=6, stick='nw')
         #
-        self.next_page_button = tkinter.Button(self.buttons_frame, text="Next Page", state='normal', command=self.next_page)
+        self.next_page_button = tkinter.Button(
+            self.buttons_frame, text="Next Page", state='normal', command=self.next_page)
         self.next_page_button.grid(row=1, column=1, stick='nw')
-        self.prev_page_button = tkinter.Button(self.buttons_frame, text="Prev Page", state='disabled', command=self.prev_page)
+        self.prev_page_button = tkinter.Button(
+            self.buttons_frame, text="Prev Page", state='disabled', command=self.prev_page)
         self.prev_page_button.grid(row=1, column=0, stick='nw')
         # Draw window -------------------------
         self.display_page()
         print('Done fetching data')
         # root checker
-        print('listItems() img_label_array length = ' + str(len(self.img_label_arr)))
+        print('listItems() img_label_array length = ' +
+              str(len(self.img_label_arr)))
         self.root.protocol('WM_DELETE_WINDOW', self.root_owner_caller)
         self.root.mainloop()
-    #modify self.list_of_items using items_sell
+    # modify self.list_of_items using items_sell
 
 ####################################################################
-class TaskBarIcon(wx.TaskBarIcon):
-    def __init__(self, frame):
-        self.frame = frame
-        super(TaskBarIcon, self).__init__()
-        self.set_icon(TRAY_ICON)
-        self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
+# class TaskBarIcon(wx.TaskBarIcon):
+    # def __init__(self, frame):
+    #     self.frame = frame
+    #     super(TaskBarIcon, self).__init__()
+    #     self.set_icon(TRAY_ICON)
+    #     self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
@@ -708,22 +803,22 @@ class TaskBarIcon(wx.TaskBarIcon):
     def OpenApp(self, event):
         SteamScraperApp(items_sell)
 
-    def OpenCalculator(self,event):
+    def OpenCalculator(self, event):
         Calculator()
 
     def OpenAddItem(self, event):
         AddItem()
 
-    def OpenProfileViewer(self,event):
+    def OpenProfileViewer(self, event):
         ProfileSearch()
 
 
-class App(wx.App):
-    def OnInit(self):
-        frame = wx.Frame(None)
-        self.SetTopWindow(frame)
-        TaskBarIcon(frame)
-        return True
+# class App(wx.App):
+#     def OnInit(self):
+#         frame = wx.Frame(None)
+#         self.SetTopWindow(frame)
+#         TaskBarIcon(frame)
+#         return True
 
 def grab_data_from_textfile():
     print('Grab data called')
@@ -740,20 +835,5 @@ def grab_data_from_textfile():
 
 
 ######################################################################
-def main():
-    Scan_For_Link_Errors('market_sell.txt')
-    Scan_For_Link_Errors('market_buy.txt')
-    Read_Settings()
-    app = App(False)
-    grab_data_from_textfile()
-
-    if settings_json["notifications"] == 1:
-        Check_Prices_Sell(settings_json["checktime"])
-
-    SteamScraperApp(items_sell)
-    app.MainLoop()
-
-
 if __name__ == '__main__':
-    print('Compile Complete')
     main()
