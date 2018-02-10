@@ -3,3 +3,7 @@
 /._pycache_
 /.build
 /.dist
+market_sell.txt
+market_buy.txt
+Thumbs.db
+
