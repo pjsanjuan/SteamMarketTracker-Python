@@ -17,3 +17,5 @@ Steam takes a cut of the profits when selling an item. The calculator will help 
 ## Steam Server Status
 With a simple button click, check the status of Steam servers (https://steamstat.us/).
 
+# Demo
+(https://www.youtube.com/watch?v=gc1BaPHAClw)
